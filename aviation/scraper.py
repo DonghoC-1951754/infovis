@@ -184,7 +184,7 @@ def load_existing_data(csv_path):
 
 # Hoofdfunctie
 def main():
-    csv_path = 'planecrash_data/vliegtuigongevallen.csv'
+    csv_path = 'aviation/planecrash_data/vliegtuigongevallen.csv'
     existing_data = load_existing_data(csv_path)  # Laad bestaande records
     
     years_to_process = list(range(2024, 2026))
