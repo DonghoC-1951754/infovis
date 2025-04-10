@@ -11,7 +11,7 @@ const Countries = () => {
 
     const projection = d3
       .geoMercator()
-      .scale(150)
+      .scale(100)
       .translate([width / 2, height / 2]);
     const path = d3.geoPath().projection(projection);
 
