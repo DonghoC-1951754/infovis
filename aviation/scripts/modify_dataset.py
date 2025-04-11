@@ -24,7 +24,9 @@ def add_operator_country(main_csv):
 
 def main():
     main_csv = pd.read_csv("./planecrash_data/planecrash_dataset.csv")
+
     add_operator_country(main_csv)
+    
     return
 
 if __name__ == "__main__":
