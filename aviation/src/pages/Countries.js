@@ -3,8 +3,6 @@ import SidePanel from "../components/Sidepanel";
 import CountriesFilter from "../components/CountriesFilter";
 import * as d3 from "d3";
 
-const data = [];
-
 const Countries = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -31,17 +29,13 @@ const Countries = () => {
   };
 
   useEffect(() => {
-    console.log("hier");
-
     const url = `http://127.0.0.1:5000/operator-country?start_date=2024-01-01&end_date=2025-04-01`;
-
     handleFilter(url);
   }, []);
 
   useEffect(() => {
     if (!data) return;
 
-    console.log("refresh");
     const width = 960;
     const height = 600;
     const svg = d3.select("#map");
