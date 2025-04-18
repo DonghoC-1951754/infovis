@@ -1,10 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CountriesRankingTable from "./CountriesRankingTable.js";
 
 const CountriesFilter = ({ onDateChange }) => {
   // Initial date value (for example, today's date)
   const [startDate, setFromDate] = useState("2024-01-01");
   const [endDate, setToDate] = useState("2025-04-17");
+  const [data, setData] = useState(null);
+
+  const getData = (startDate, endDate) => {
+    // console.log(startDate, endDate);
+    fetch(
+      `http://127.0.0.1:5000/operator-country?start_date=${startDate}&end_date=${endDate}`
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch error");
+        return res.json();
+      })
+      .then((json) => {
+        setData(json);
+        onDateChange(json);
+      })
+      .catch((err) => console.error(err));
+  };
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
@@ -13,10 +30,12 @@ const CountriesFilter = ({ onDateChange }) => {
     } else if (name === "endDate") {
       setToDate(value);
     }
-    onDateChange(
-      `http://127.0.0.1:5000/operator-country?start_date=${startDate}&end_date=${endDate}`
-    );
   };
+
+  useEffect(() => {
+    console.log(startDate, endDate);
+    getData(startDate, endDate);
+  }, [startDate, endDate]);
 
   return (
     <aside className="w-90 bg-gray-100 p-4 border-l border-gray-300">
@@ -48,7 +67,7 @@ const CountriesFilter = ({ onDateChange }) => {
           <option>Option 2</option>
         </select>
       </div>
-      <CountriesRankingTable />
+      <CountriesRankingTable data={data} />
     </aside>
   );
 };

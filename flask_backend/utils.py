@@ -12,7 +12,7 @@ def get_operator_country_amount_by_range(start_date, end_date):
 
     country_counts = filtered_df['Operator Country'].value_counts().reset_index()
     country_counts.columns = ['Operator Country', 'Count']
-
+    country_counts = country_counts.sort_values(by="Count", ascending=False)
     # Convert the result to JSON format
     result_json = country_counts.to_json(orient='records')
     return result_json

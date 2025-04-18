@@ -7,16 +7,8 @@ const Countries = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleFilter = (url) => {
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => setData(data))
-      .catch((error) => setError(error.message));
+  const handleFilter = (data) => {
+    setData(data);
   };
 
   const getColor = (count) => {
@@ -29,8 +21,16 @@ const Countries = () => {
   };
 
   useEffect(() => {
-    const url = `http://127.0.0.1:5000/operator-country?start_date=2024-01-01&end_date=2025-04-01`;
-    handleFilter(url);
+    const url = `http://127.0.0.1:5000/operator-country?start_date=2024-01-01&end_date=2025-04-17`;
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => setData(data))
+      .catch((error) => setError(error.message));
   }, []);
 
   useEffect(() => {
@@ -77,7 +77,7 @@ const Countries = () => {
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
-
+    console.log("refresh");
     svg.call(zoom);
   }, [data]);
 
