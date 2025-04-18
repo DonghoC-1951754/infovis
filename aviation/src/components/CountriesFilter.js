@@ -2,13 +2,11 @@ import React, { useEffect, useState } from "react";
 import CountriesRankingTable from "./CountriesRankingTable.js";
 
 const CountriesFilter = ({ onDateChange }) => {
-  // Initial date value (for example, today's date)
   const [startDate, setFromDate] = useState("2024-01-01");
   const [endDate, setToDate] = useState("2025-04-17");
   const [data, setData] = useState(null);
 
   const getData = (startDate, endDate) => {
-    // console.log(startDate, endDate);
     fetch(
       `http://127.0.0.1:5000/operator-country?start_date=${startDate}&end_date=${endDate}`
     )
@@ -33,20 +31,19 @@ const CountriesFilter = ({ onDateChange }) => {
   };
 
   useEffect(() => {
-    console.log(startDate, endDate);
     getData(startDate, endDate);
   }, [startDate, endDate]);
 
   return (
     <aside className="w-90 bg-gray-100 p-4 border-l border-gray-300">
       <h2 className="text-lg font-semibold mb-4">Filters</h2>
-      <div className="mb-2">
+      <div className="mb-2 max-w-80">
         <label className="block mb-1">Date</label>
         <div className="flex items-center">
           <input
             name="startDate"
             type="date"
-            className="w-full p-2 border rounded"
+            className="p-2 border rounded"
             value={startDate}
             onChange={handleDateChange}
           />
@@ -54,13 +51,13 @@ const CountriesFilter = ({ onDateChange }) => {
           <input
             name="endDate"
             type="date"
-            className="w-full p-2 border rounded"
+            className="p-2 border rounded"
             value={endDate}
             onChange={handleDateChange}
           />
         </div>
       </div>
-      <div>
+      <div className="max-w-80">
         <label className="block mb-1">Dropdown</label>
         <select className="w-full mb-3 p-2 border rounded">
           <option>Option 1</option>

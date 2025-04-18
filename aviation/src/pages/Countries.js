@@ -60,9 +60,16 @@ const Countries = () => {
         .attr("d", path)
         .attr("fill", (d) => {
           const countryName = d.properties.name;
+          const countryNameLong = d.properties.name_long;
+
           const country = data.find(
-            (item) => item["Operator Country"] === countryName
+            (item) =>
+              item["Operator Country"].toLowerCase() ===
+                countryName.toLowerCase() ||
+              item["Operator Country"].toLowerCase() ===
+                countryNameLong.toLowerCase()
           );
+
           const count = country ? country.Count : 0;
           return getColor(count);
         })
@@ -77,7 +84,6 @@ const Countries = () => {
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
-    console.log("refresh");
     svg.call(zoom);
   }, [data]);
 
