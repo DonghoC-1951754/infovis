@@ -60,7 +60,9 @@ const CountriesFilter = ({ onDateChange }) => {
       <div className="max-w-80">
         <label className="block mb-1">Dropdown</label>
         <select className="w-full mb-3 p-2 border rounded">
-          <option>Option 1</option>
+          <option>
+            Number of accidents by the operator's country of origin
+          </option>
           <option>Option 2</option>
         </select>
       </div>
