@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from utils import get_operator_country_amount_by_range
+from utils import get_operator_country_amount_by_range, get_list_of_manufacturers, get_number_of_accidents
 
 app = Flask(__name__)
 CORS(app)
@@ -18,6 +18,14 @@ def get_operator_country():
     
     result = get_operator_country_amount_by_range(start_date, end_date)
     return result
+
+@app.route('/manufacturers', methods=['GET'])
+def get_manufacturers_list():
+    return jsonify(get_list_of_manufacturers())
+
+@app.route('/number_of_accidents_per_manufacturer', methods=['GET'])
+def get_number_of_accidents_per_manufacturer():
+    return get_number_of_accidents()
 
 if __name__ == '__main__':
     app.run(debug=True)
