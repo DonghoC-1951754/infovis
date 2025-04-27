@@ -138,7 +138,7 @@ const Manufacturers = () => {
       <SidePanel />
       <div className="h-full w-full flex-col">
         <div className="h-1/2 w-full flex">
-          <div className="bg-white shadow p-4 w-full h-full flex">
+          <div className="bg-neutral-100 shadow p-4 w-full h-full flex">
             {/* Line Graph (4/5) */}
             <div className="w-4/5 h-full">
               <LineGraphManufacturer
@@ -166,10 +166,10 @@ const Manufacturers = () => {
           </div>
         </div>
         <div className="h-1/2 w-full flex">
-          <div className="bg-white shadow p-6 w-1/2 h-full flex">
+          <div className="bg-neutral-100 shadow p-6 w-1/2 h-full flex">
             <PieChartManufacturerAccidentContribution />
           </div>
-          <div className="bg-white shadow p-6 w-1/2 h-full flex">
+          <div className="bg-neutral-100 shadow p-6 w-1/2 h-full flex">
             <BarChartTotalNumberAccidentsPerManufacturer />
           </div>
         </div>
