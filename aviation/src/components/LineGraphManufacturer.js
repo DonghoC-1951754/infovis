@@ -46,10 +46,16 @@ const LineGraphManufacturer = ({ id, title, data, selectedManufacturers }) => {
       .nice()
       .range([height, 0]);
 
+    const years = d3.range(
+      Math.ceil(d3.min(data, (d) => d.year) / 5) * 5,
+      Math.floor(d3.max(data, (d) => d.year) / 5) * 5 + 5,
+      5
+    );
+
     svg
       .append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x).ticks(5));
+      .call(d3.axisBottom(x).tickValues(years).tickFormat(d3.format("d")));
 
     svg.append("g").call(d3.axisLeft(y).ticks(5));
 
@@ -192,11 +198,12 @@ const LineGraphManufacturer = ({ id, title, data, selectedManufacturers }) => {
         .style("color", "#333")
         .text(key);
     });
+    console.log("Animation");
   }, [data, selectedManufacturers]);
 
   return (
     <div className="p-3 flex-col h-full">
-      <h2 className="text-lg font-semibold mb-1">{title}</h2>
+      <h2 className="text-lg font-semibold mb-1 text-center">{title}</h2>
       <div className="flex w-full h-full">
         <div className="flex-1">
           <div
