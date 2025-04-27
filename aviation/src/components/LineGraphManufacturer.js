@@ -11,7 +11,7 @@ const LineGraphManufacturer = ({ id, title, data, selectedManufacturers }) => {
     d3.select(d3Container.current).selectAll("*").remove();
     d3.select(legendContainer.current).selectAll("*").remove(); // clear legend separately
 
-    const margin = { top: 20, right: 20, bottom: 60, left: 50 };
+    const margin = { top: 25, right: 20, bottom: 60, left: 50 };
     const width = 1000 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 

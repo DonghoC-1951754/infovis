@@ -3,6 +3,7 @@ import SidePanel from "../components/Sidepanel";
 import * as d3 from "d3";
 import GraphCard from "../components/GraphCard.js";
 import LineGraphManufacturer from "../components/LineGraphManufacturer.js";
+import PieChartManufacturerAccidentContribution from "../components/PieChartManufacturerAccidentContribution.js";
 
 const Manufacturers = () => {
   const [allData, setAllData] = useState([]);
@@ -134,32 +135,37 @@ const Manufacturers = () => {
   return (
     <div className="h-screen flex">
       <SidePanel />
-      <div className="h-1/2 w-full flex">
-        <div className="bg-white shadow p-4 w-full h-full flex">
-          {/* Line Graph (4/5) */}
-          <div className="w-4/5 h-full">
-            <LineGraphManufacturer
-              id={1}
-              title="Number of accidents per manufacturer"
-              data={allData}
-              selectedManufacturers={selectedManufacturers}
-            />
-          </div>
+      <div className="h-full w-full flex-col">
+        <div className="h-1/2 w-full flex">
+          <div className="bg-white shadow p-4 w-full h-full flex">
+            {/* Line Graph (4/5) */}
+            <div className="w-4/5 h-full">
+              <LineGraphManufacturer
+                id={1}
+                title="Number of accidents per manufacturer"
+                data={allData}
+                selectedManufacturers={selectedManufacturers}
+              />
+            </div>
 
-          {/* Filter (1/5) */}
-          <div className="w-1/5 h-full overflow-auto flex flex-col">
-            {manufacturers.map((manufacturer) => (
-              <div key={manufacturer} className="flex items-center mb-2">
-                <input
-                  type="checkbox"
-                  className="mr-2"
-                  checked={selectedManufacturers.has(manufacturer)}
-                  onChange={() => toggleManufacturer(manufacturer)}
-                />
-                <label>{manufacturer}</label>
-              </div>
-            ))}
+            {/* Filter (1/5) */}
+            <div className="w-1/5 h-full overflow-auto flex flex-col">
+              {manufacturers.map((manufacturer) => (
+                <div key={manufacturer} className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    className="mr-2"
+                    checked={selectedManufacturers.has(manufacturer)}
+                    onChange={() => toggleManufacturer(manufacturer)}
+                  />
+                  <label>{manufacturer}</label>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
+        <div className="h-1/2 w-full flex">
+          <PieChartManufacturerAccidentContribution />
         </div>
       </div>
     </div>

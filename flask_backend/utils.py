@@ -47,3 +47,36 @@ def get_number_of_accidents():
     result = grouped.to_dict(orient='records')
     json_result = json.dumps(result, indent=4)
     return json_result
+
+def get_number_of_accidents_per_year():
+
+    # Read the CSV files
+    crashes_df = pd.read_csv("../planecrash_data/planecrash_dataset_with_manufacturers.csv")
+    manufacturers_df = pd.read_csv("../planecrash_data/manufacturer_list.csv")
+    
+    # Get list of all unique manufacturers
+    all_manufacturers = manufacturers_df['Manufacturer'].tolist()
+    
+    # Get list of all years in the crashes data
+    all_years = crashes_df['Year'].unique()
+    
+    # Initialize result structure
+    result = []
+    
+    # For each year, count occurrences of each manufacturer
+    for year in sorted(all_years):
+        year_data = {"year": int(year)}
+        
+        # Filter crashes for this year
+        year_crashes = crashes_df[crashes_df['Year'] == year]
+        
+        # Count each manufacturer
+        for manufacturer in all_manufacturers:
+            # Count occurrences of this manufacturer in this year
+            count = len(year_crashes[year_crashes['Manufacturer'] == manufacturer])
+            year_data[manufacturer] = count
+        
+        result.append(year_data)
+    
+    # Convert to JSON
+    return json.dumps(result, indent=2)

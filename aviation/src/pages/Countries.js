@@ -107,10 +107,7 @@ const Countries = () => {
       .attr("x1", "0%")
       .attr("x2", "100%");
 
-    gradient
-      .append("stop")
-      .attr("offset", "0%")
-      .attr("stop-color", "#f2f0f7"); // Light color
+    gradient.append("stop").attr("offset", "0%").attr("stop-color", "#f2f0f7"); // Light color
 
     gradient
       .append("stop")
@@ -133,9 +130,9 @@ const Countries = () => {
       .domain([minVal, maxVal])
       .range([0, legendWidth]);
 
-    const tickValues = d3.range(0, 6).map((i) =>
-      Math.round(minVal + (i * (maxVal - minVal)) / 5)
-    );
+    const tickValues = d3
+      .range(0, 6)
+      .map((i) => Math.round(minVal + (i * (maxVal - minVal)) / 5));
 
     const xAxis = d3
       .axisBottom(xScale)
@@ -148,7 +145,6 @@ const Countries = () => {
       .call(xAxis)
       .selectAll("text")
       .style("font-size", "10px");
-
   }, [data]);
 
   if (error) {
@@ -160,11 +156,7 @@ const Countries = () => {
       <SidePanel />
 
       <div className="relative w-full h-full border">
-        <svg
-          id="map"
-          viewBox="0 0 960 600"
-          className="w-full h-full"
-        ></svg>
+        <svg id="map" viewBox="0 0 960 600" className="w-full h-full"></svg>
 
         <div
           id="legend"
