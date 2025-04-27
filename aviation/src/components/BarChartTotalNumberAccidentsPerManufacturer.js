@@ -135,7 +135,12 @@ export default function AircraftCrashVisualization() {
 
     svg
       .append("g")
-      .call(d3.axisLeft(y))
+      .call(
+        d3
+          .axisLeft(y)
+          .ticks(Math.min(maxCrashes, 10)) // Set reasonable max tick count
+          .tickFormat(d3.format(".0f")) // Format as integer
+      )
       .selectAll("text")
       .style("font-size", "10px");
 

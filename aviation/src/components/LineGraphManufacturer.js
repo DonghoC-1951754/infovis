@@ -71,6 +71,7 @@ const LineGraphManufacturer = ({ id, title, data, selectedManufacturers }) => {
       .attr("text-anchor", "start")
       .attr("x", 0)
       .attr("y", -10)
+      .style("font-size", "16px")
       .text("Accidents");
 
     const line = d3
