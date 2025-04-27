@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import GraphCard from "../components/GraphCard.js";
 import LineGraphManufacturer from "../components/LineGraphManufacturer.js";
 import PieChartManufacturerAccidentContribution from "../components/PieChartManufacturerAccidentContribution.js";
+import BarChartTotalNumberAccidentsPerManufacturer from "../components/BarChartTotalNumberAccidentsPerManufacturer.js";
 
 const Manufacturers = () => {
   const [allData, setAllData] = useState([]);
@@ -165,7 +166,12 @@ const Manufacturers = () => {
           </div>
         </div>
         <div className="h-1/2 w-full flex">
-          <PieChartManufacturerAccidentContribution />
+          <div className="bg-white shadow p-6 w-1/2 h-full flex">
+            <PieChartManufacturerAccidentContribution />
+          </div>
+          <div className="bg-white shadow p-6 w-1/2 h-full flex">
+            <BarChartTotalNumberAccidentsPerManufacturer />
+          </div>
         </div>
       </div>
     </div>

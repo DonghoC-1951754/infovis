@@ -24,7 +24,7 @@ export default function PieChartManufacturerAccidentContribution() {
         const jsonData = await response.json();
         setData(jsonData);
         if (jsonData.length > 0) {
-          setSelectedYear(jsonData[0].year);
+          setSelectedYear(2024);
         }
         setLoading(false);
       } catch (err) {
@@ -197,7 +197,7 @@ export default function PieChartManufacturerAccidentContribution() {
   };
 
   return (
-    <div className="flex flex-col items-center h-full p-6 w-1/2 max-w-4xl">
+    <div className="flex flex-col items-center h-full p-4 w-full max-w-4xl">
       <div className="w-full h-full flex flex-col md:flex-row items-center justify-center gap-8">
         <div className="w-full pr-2 h-full overflow-auto md:w-48 mb-4 md:mb-0">
           <label className="block text-sm font-medium mb-2">Select Year:</label>
