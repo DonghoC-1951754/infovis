@@ -1,12 +1,46 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-const LineGraphManufacturer = ({ id, title, data, selectedManufacturers }) => {
+const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
   const d3Container = useRef(null);
   const legendContainer = useRef(null);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch data from the specified endpoint
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          "http://localhost:5000/number_of_accidents_per_manufacturer_per_year"
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const fetchedData = await response.json();
+        setData(fetchedData);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
-    if (data.length === 0) return;
+    if (
+      loading ||
+      error ||
+      data.length === 0 ||
+      !selectedManufacturers ||
+      selectedManufacturers.size === 0
+    )
+      return;
 
     d3.select(d3Container.current).selectAll("*").remove();
     d3.select(legendContainer.current).selectAll("*").remove(); // clear legend separately
@@ -72,7 +106,7 @@ const LineGraphManufacturer = ({ id, title, data, selectedManufacturers }) => {
       .attr("x", 0)
       .attr("y", -10)
       .style("font-size", "16px")
-      .text("Accidents");
+      .text("Number of accidents");
 
     const line = d3
       .line()
@@ -199,8 +233,39 @@ const LineGraphManufacturer = ({ id, title, data, selectedManufacturers }) => {
         .style("color", "#333")
         .text(key);
     });
-    console.log("Animation");
-  }, [data, selectedManufacturers]);
+  }, [data, selectedManufacturers, loading, error]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        Loading accident data...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-red-500">
+        Error: {error}
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        No accident data available
+      </div>
+    );
+  }
+
+  if (!selectedManufacturers || selectedManufacturers.size === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        Please select at least one manufacturer
+      </div>
+    );
+  }
 
   return (
     <div className="p-3 flex-col h-full">

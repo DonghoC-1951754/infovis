@@ -12,6 +12,7 @@ const Manufacturers = () => {
   const [selectedManufacturers, setSelectedManufacturers] = useState(
     new Set(["Boeing", "Airbus"]) // Default selected manufacturers
   );
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/manufacturers")
@@ -143,25 +144,69 @@ const Manufacturers = () => {
             <div className="w-4/5 h-full">
               <LineGraphManufacturer
                 id={1}
-                title="Number of accidents per manufacturer"
+                title="Total Aviation Accidents Comparison (Yearly)"
                 data={allData}
                 selectedManufacturers={selectedManufacturers}
               />
             </div>
 
             {/* Filter (1/5) */}
-            <div className="w-1/5 h-full overflow-auto flex flex-col">
-              {manufacturers.map((manufacturer) => (
-                <div key={manufacturer} className="flex items-center mb-2">
-                  <input
-                    type="checkbox"
-                    className="mr-2"
-                    checked={selectedManufacturers.has(manufacturer)}
-                    onChange={() => toggleManufacturer(manufacturer)}
-                  />
-                  <label>{manufacturer}</label>
+            <div className="w-1/5 h-full border-l pl-4 ml-2">
+              <div className="sticky top-0 bg-white z-10 pb-2">
+                <h3 className="text-lg font-semibold mb-3">Manufacturers</h3>
+                <div className="flex justify-between mb-3">
+                  <button
+                    onClick={() =>
+                      setSelectedManufacturers(new Set(manufacturers))
+                    }
+                    className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 px-2 py-1 rounded"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    onClick={() => setSelectedManufacturers(new Set())}
+                    className="text-xs bg-gray-50 hover:bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                  >
+                    Clear All
+                  </button>
                 </div>
-              ))}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search manufacturers..."
+                    className="w-full border rounded py-1 px-2 text-sm mb-3"
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-auto max-h-[calc(100%-120px)]">
+                {manufacturers
+                  .filter((m) =>
+                    m.toLowerCase().includes(searchTerm?.toLowerCase() || "")
+                  )
+                  .map((manufacturer) => (
+                    <div
+                      key={manufacturer}
+                      className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded"
+                    >
+                      <input
+                        id={`check-${manufacturer}`}
+                        type="checkbox"
+                        className="mr-2 h-4 w-4 text-blue-600 cursor-pointer"
+                        checked={selectedManufacturers.has(manufacturer)}
+                        onChange={() => toggleManufacturer(manufacturer)}
+                      />
+                      <label
+                        htmlFor={`check-${manufacturer}`}
+                        className="cursor-pointer text-sm flex-1 truncate"
+                        title={manufacturer}
+                      >
+                        {manufacturer}
+                      </label>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         </div>

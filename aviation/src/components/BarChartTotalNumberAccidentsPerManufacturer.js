@@ -12,6 +12,7 @@ export default function AircraftCrashVisualization() {
   const [topManufacturersCount, setTopManufacturersCount] = useState(10);
   const [aggregatedData, setAggregatedData] = useState([]);
   const chartRef = useRef(null);
+  const tooltipRef = useRef(null);
 
   // Fetch data
   useEffect(() => {
@@ -34,6 +35,8 @@ export default function AircraftCrashVisualization() {
         setData(jsonData);
       } catch (err) {
         setError(err.message);
+        // Generate mock data if there's an error
+        generateMockData();
       } finally {
         setLoading(false);
       }
@@ -41,6 +44,36 @@ export default function AircraftCrashVisualization() {
 
     fetchData();
   }, []);
+
+  // Generate mock data for development/testing
+  const generateMockData = () => {
+    const mockData = [];
+    // Generate mock data from 1920 to 2025
+    for (let year = 1920; year <= 2025; year++) {
+      const yearData = { year };
+      [
+        "Boeing",
+        "Airbus",
+        "Cessna",
+        "Bombardier",
+        "Embraer",
+        "Piper Aircraft",
+        "Beechcraft",
+        "Bell",
+        "Antonov",
+        "Lockheed Corporation",
+      ].forEach((manufacturer) => {
+        // Random number of crashes between 0 and 10
+        yearData[manufacturer] = Math.floor(Math.random() * 11);
+      });
+      mockData.push(yearData);
+    }
+
+    // Set max year from mock data
+    setMaxYear(2025);
+    setEndYear(2025);
+    setData(mockData);
+  };
 
   // Process data when inputs change
   useEffect(() => {
@@ -74,20 +107,40 @@ export default function AircraftCrashVisualization() {
     setAggregatedData(result);
   }, [data, startYear, endYear, topManufacturersCount]);
 
+  // Create tooltip ref on component mount
+  useEffect(() => {
+    // Create tooltip div inside the component rather than appending to body
+    tooltipRef.current = d3
+      .select(chartRef.current)
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0)
+      .style("position", "absolute")
+      .style("text-align", "center")
+      .style("padding", "8px")
+      .style("font-size", "12px")
+      .style("background", "white")
+      .style("border", "1px solid #ddd")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none")
+      .style("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
+
+    return () => {
+      if (tooltipRef.current) {
+        tooltipRef.current.remove();
+      }
+    };
+  }, []);
+
   // Draw the chart
   useEffect(() => {
-    if (aggregatedData.length === 0) return;
-
-    // Make sure the chart container exists before trying to render
-    if (!chartRef.current) return;
+    if (aggregatedData.length === 0 || !chartRef.current) return;
 
     // Clear previous chart
-    d3.select(chartRef.current).html("");
+    d3.select(chartRef.current).selectAll("svg").remove();
 
     // Get container dimensions to make chart responsive
-    // Use default width with fallback if clientWidth is not available
-    const containerWidth =
-      (chartRef.current && chartRef.current.clientWidth) || 400;
+    const containerWidth = chartRef.current.clientWidth || 400;
 
     // Set dimensions - make them responsive to container
     const margin = { top: 20, right: 20, bottom: 70, left: 40 };
@@ -144,22 +197,6 @@ export default function AircraftCrashVisualization() {
       .selectAll("text")
       .style("font-size", "10px");
 
-    // Create tooltip div
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .attr("class", "tooltip")
-      .style("opacity", 0)
-      .style("position", "absolute")
-      .style("text-align", "center")
-      .style("padding", "8px")
-      .style("font-size", "12px")
-      .style("background", "white")
-      .style("border", "1px solid #ddd")
-      .style("border-radius", "4px")
-      .style("pointer-events", "none")
-      .style("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
-
     // Bars with animations and interactivity
     svg
       .selectAll("bars")
@@ -176,19 +213,24 @@ export default function AircraftCrashVisualization() {
         // Highlight bar
         d3.select(this).attr("opacity", 1).attr("fill", "#2563eb");
 
+        // Calculate position relative to chart container
+        const chartRect = chartRef.current.getBoundingClientRect();
+        const eventX = event.clientX - chartRect.left;
+        const eventY = event.clientY - chartRect.top;
+
         // Show tooltip
-        tooltip.transition().duration(200).style("opacity", 0.9);
-        tooltip
+        tooltipRef.current
+          .style("opacity", 0.9)
           .html(`<strong>${d.manufacturer}</strong><br>${d.crashes} crashes`)
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY - 28 + "px");
+          .style("left", `${eventX + 10}px`)
+          .style("top", `${eventY - 28}px`);
       })
       .on("mouseout", function () {
         // Restore bar
         d3.select(this).attr("opacity", 0.8).attr("fill", "#3b82f6");
 
         // Hide tooltip
-        tooltip.transition().duration(500).style("opacity", 0);
+        tooltipRef.current.style("opacity", 0);
       })
       // Animate bars growing from bottom
       .transition()
@@ -210,50 +252,13 @@ export default function AircraftCrashVisualization() {
       .transition()
       .duration(1000)
       .style("opacity", 1);
-
-    // Clean up tooltip when component unmounts
-    return () => {
-      d3.select("body").selectAll(".tooltip").remove();
-    };
   }, [aggregatedData, startYear, endYear]);
-
-  // Mock data for development/testing
-  useEffect(() => {
-    if (loading && !data.length) {
-      const mockData = [];
-      // Generate mock data from 1920 to 2025
-      for (let year = 1920; year <= 2025; year++) {
-        const yearData = { year };
-        [
-          "Boeing",
-          "Airbus",
-          "Cessna",
-          "Bombardier",
-          "Embraer",
-          "Piper Aircraft",
-          "Beechcraft",
-          "Bell",
-          "Antonov",
-          "Lockheed Corporation",
-        ].forEach((manufacturer) => {
-          // Random number of crashes between 0 and 10
-          yearData[manufacturer] = Math.floor(Math.random() * 11);
-        });
-        mockData.push(yearData);
-      }
-
-      // Set max year from mock data
-      setMaxYear(2025);
-      setEndYear(2025);
-
-      setData(mockData);
-      setLoading(false);
-    }
-  }, [loading, data.length]);
 
   return (
     <div className="w-full h-full flex flex-col">
-      <h2 className="text-lg font-semibold mb-2">Aircraft Crash Data</h2>
+      <h2 className="text-lg font-semibold mb-2">
+        Top Manufacturers by Aviation Accidents (Selected Years)
+      </h2>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-2 py-1 rounded mb-2 text-sm">
@@ -310,10 +315,10 @@ export default function AircraftCrashVisualization() {
 
       {loading ? (
         <div className="flex-grow flex justify-center items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <p className="text-gray-600">Loading data...</p>
         </div>
       ) : (
-        <div className="flex-grow overflow-hidden">
+        <div className="flex-grow overflow-hidden relative">
           <div ref={chartRef} className="w-full h-full"></div>
 
           {aggregatedData.length === 0 && (

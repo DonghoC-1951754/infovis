@@ -221,7 +221,6 @@ export default function PieChartManufacturerAccidentContribution() {
 
           {/* Manufacturers List */}
           <div className="mt-6">
-            <h3 className="font-medium mb-2">Manufacturers by Accidents:</h3>
             <ul className="space-y-2">
               {chartData &&
                 chartData.map((item, index) => (
