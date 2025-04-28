@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from utils import get_operator_country_amount_by_range, get_list_of_manufacturers, get_number_of_accidents, get_number_of_accidents_per_year
+from utils import get_operator_country_amount_by_range, get_list_of_manufacturers, get_number_of_accidents, get_number_of_accidents_per_year, get_cluster_data
 
 app = Flask(__name__)
 CORS(app)
@@ -30,6 +30,14 @@ def get_number_of_accidents_per_manufacturer():
 @app.route('/number_of_accidents_per_manufacturer_per_year', methods=['GET'])
 def get_number_of_accidents_per_manufacturer_per_year():
     return get_number_of_accidents_per_year()
+
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({"message": "Welcome to the Aircraft Data API!"})
+
+@app.route('/api/cluster-data', methods=['GET'])
+def get_cluster_data_all():
+    return get_cluster_data()
 
 if __name__ == '__main__':
     app.run(debug=True)
