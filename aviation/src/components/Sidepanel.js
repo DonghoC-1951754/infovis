@@ -93,6 +93,23 @@ const SidePanel = () => {
                 </span>
               </a>
             </li>
+            <li>
+              <a
+                href="/info"
+                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              >
+                <svg
+                  className="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M10 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm.75-5.5V5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0Z" />
+                </svg>
+                <span className="flex-1 ms-3 whitespace-nowrap">Info</span>
+              </a>
+            </li>
           </ul>
         </div>
       </aside>

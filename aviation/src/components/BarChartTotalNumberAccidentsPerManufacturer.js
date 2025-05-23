@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-export default function AircraftCrashVisualization() {
+export default function BarChartTotalNumberAccidentsPerManufacturer() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -145,7 +145,7 @@ export default function AircraftCrashVisualization() {
     // Set dimensions - make them responsive to container
     const margin = { top: 20, right: 20, bottom: 70, left: 40 };
     const width = containerWidth - margin.left - margin.right;
-    const height = 300 - margin.top - margin.bottom;
+    const height = 250 - margin.top - margin.bottom;
 
     // Create SVG with responsive dimensions
     const svg = d3

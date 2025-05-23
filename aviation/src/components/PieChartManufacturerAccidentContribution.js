@@ -1,12 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 
+// Shared fixed color palette - SAME AS LINE CHART
+const sharedColors = [
+  ...d3.schemeCategory10,
+  ...d3.schemeSet2,
+  ...d3.schemeSet3,
+];
+
 export default function PieChartManufacturerAccidentContribution() {
   const [data, setData] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [colorScale, setColorScale] = useState(null);
+  // Removed colorScale state since we're using hardcoded colors
   const [hoverInfo, setHoverInfo] = useState(null);
   const svgRef = useRef();
   const chartContainerRef = useRef();
@@ -89,16 +96,26 @@ export default function PieChartManufacturerAccidentContribution() {
       .append("g")
       .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-    const colors = [...d3.schemeCategory10.slice(0, 5), "#808080"];
+    // Extract ALL manufacturers from ALL years to ensure consistent color mapping
+    const allManufacturersFromAllData = [];
+    data.forEach((yearData) => {
+      Object.keys(yearData).forEach((key) => {
+        if (key !== "year" && !allManufacturersFromAllData.includes(key)) {
+          allManufacturersFromAllData.push(key);
+        }
+      });
+    });
+
+    // Sort manufacturers to ensure consistent ordering (same as line chart)
+    const sortedAllManufacturers = allManufacturersFromAllData.sort();
+
+    // Create color scale with ALL manufacturers using shared colors
     const color = d3
       .scaleOrdinal()
-      .domain(chartData.map((d) => d.manufacturer))
-      .range(colors);
+      .domain(sortedAllManufacturers)
+      .range(sharedColors.slice(0, sortedAllManufacturers.length));
 
-    setColorScale({
-      domain: chartData.map((d) => d.manufacturer),
-      range: colors,
-    });
+    // Remove this line since we're not using colorScale state anymore
 
     const pie = d3
       .pie()
@@ -189,11 +206,28 @@ export default function PieChartManufacturerAccidentContribution() {
 
   const { chartData, totalAccidents } = getManufacturersData();
 
+  // Get color for list items using the same shared color system
   const getColor = (manufacturer) => {
-    if (!colorScale) return "#cccccc";
-    const index = colorScale.domain.indexOf(manufacturer);
-    if (index === -1) return "#cccccc";
-    return colorScale.range[index];
+    // Get ALL manufacturers from ALL data to ensure consistent color mapping
+    const allManufacturersFromAllData = [];
+    data.forEach((yearData) => {
+      Object.keys(yearData).forEach((key) => {
+        if (key !== "year" && !allManufacturersFromAllData.includes(key)) {
+          allManufacturersFromAllData.push(key);
+        }
+      });
+    });
+
+    // Sort manufacturers (same as line chart)
+    const sortedAllManufacturers = allManufacturersFromAllData.sort();
+
+    // Create color scale with shared colors
+    const colorScale = d3
+      .scaleOrdinal()
+      .domain(sortedAllManufacturers)
+      .range(sharedColors.slice(0, sortedAllManufacturers.length));
+
+    return colorScale(manufacturer);
   };
 
   return (
