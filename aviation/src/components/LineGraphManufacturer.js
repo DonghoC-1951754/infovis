@@ -53,7 +53,7 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
     d3.select(legendContainer.current).selectAll("*").remove();
 
     const margin = { top: 25, right: 20, bottom: 60, left: 50 };
-    const width = 1000 - margin.left - margin.right;
+    const width = 900 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
     const svg = d3

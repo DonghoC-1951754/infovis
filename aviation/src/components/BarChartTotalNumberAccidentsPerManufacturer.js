@@ -145,7 +145,7 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
     // Set dimensions - make them responsive to container
     const margin = { top: 20, right: 20, bottom: 70, left: 40 };
     const width = containerWidth - margin.left - margin.right;
-    const height = 300 - margin.top - margin.bottom;
+    const height = 250 - margin.top - margin.bottom;
 
     // Create SVG with responsive dimensions
     const svg = d3
