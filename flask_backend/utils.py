@@ -87,46 +87,56 @@ def get_number_of_accidents_per_year():
     return json.dumps(result, indent=2)
 
 def get_cluster_data():
-    output_file = '../planecrash_data/clustering_output.json'
-    input_file = '../planecrash_data/aircraft_crashes_clustered.csv'  
+    print("testing")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.abspath(os.path.join(base_dir, '..', 'planecrash_data'))
+
+    input_file = os.path.join(data_dir, 'planecrash_dataset_with_operator_country.csv')
+    clustered_csv_file = os.path.join(data_dir, 'aircraft_crashes_clustered.csv')
+    output_json_file = os.path.join(data_dir, 'clustering_output.json')
     
+    # Check if the clustering output files exist
     regenerate = request.args.get('regenerate', 'false').lower() == 'true'
+    missing_output = not (os.path.exists(clustered_csv_file) and os.path.exists(output_json_file))
     
-    if regenerate or not os.path.exists(output_file):
+    if regenerate or missing_output:
+        if not os.path.exists(input_file):
+            return jsonify({"error": f"Input file not found: {input_file}"}), 404
         try:
-            clustering_main(input_file, output_file)
+            clustering_main(input_file, output_json_file)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return jsonify({"error": f"Error generating clustering data: {str(e)}"}), 500
     try:
-        with open(output_file, 'r') as f:
+        # Load clustered output
+        with open(output_json_file, 'r') as f:
             cluster_data = json.load(f)
-        df = pd.read_csv('../planecrash_data/aircraft_crashes_clustered.csv')
-        
-        # Create the points array with the necessary properties
+
+        df = pd.read_csv(clustered_csv_file)
+
         points = []
         for _, row in df.iterrows():
             points.append({
-                "x": float(row.get('x', 0)),  # You may need to adjust these column names
-                "y": float(row.get('y', 0)),  # based on your actual DataFrame columns
+                "x": float(row.get('x', 0)),
+                "y": float(row.get('y', 0)),
                 "kmeans_cluster": int(row.get('kmeans_cluster', 0)),
                 "kmeans_interpretation": row.get('kmeans_cluster_interpretation', "Unknown"),
                 "summary": row.get('Summary', "")
             })
-        
-        # Create the distribution object (counts of points per interpretation)
-        distribution = {}
-        for interpretation in df['kmeans_cluster_interpretation'].unique():
-            count = df[df['kmeans_cluster_interpretation'] == interpretation].shape[0]
-            distribution[interpretation] = count
-        
-        # Add the missing data to the cluster_data
+
+        distribution = df['kmeans_cluster_interpretation'].value_counts().to_dict()
+
         cluster_data["points"] = points
         cluster_data["kmeans"]["distribution"] = distribution
-        
+
         return jsonify(cluster_data)
+
     except FileNotFoundError:
         return jsonify({"error": "Clustering data not found"}), 404
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"Error reading clustering data: {str(e)}"}), 500
 
 

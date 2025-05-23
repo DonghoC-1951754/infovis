@@ -23,27 +23,19 @@ nltk.download('wordnet', quiet=True)
 # Keep your custom stopwords
 unnecessary_words = ["crashed", "aircraft", "plane", "pilot", "crew", "flight", "runway", "approach", "taking", "mile",
                      "attempting", "route", "en", "ft", "due", "foot", "left", "right", "shortly", "two", "one",
-                     "short", "minute",
-                     "caused", "procedure", "cause", "caused", "procedure", "airplane", "turn", "km", "resulted",
-                     "went", "minimum",
-                     "attempted", "maintain", "causing", "contributing", "final", "second", "factor", "take", "took",
-                     "first",
-                     "resulting", "three", "named", "could", "later", "making", "possible", "north", "may", "member",
-                     "decided",
-                     "four", "began", "also", "il", "west", "several", "hour", "onto", "fl", "day", "u", "san", "de",
-                     "la",
+                     "short", "minute", "caused", "procedure", "cause", "caused", "procedure", "airplane", "turn", "km", "resulted",
+                     "went", "minimum", "maintain", "causing", "contributing", "final", "second", "factor", "take", "took",
+                     "first", "resulting", "three", "named", "could", "later", "making", "possible", "north", "may", "decided",
+                     "four", "began", "also", "il", "west", "several", "hour", "onto", "fl", "day", "u", "san", "de", "la",
                      "instead", "airport"]
 
 generic_words = ["get", "came", "going", "became", "started", "many", "moment", "time", "day", "way", "part", "place",
                  "used", "use", "around", "area", "back", "front", "top", "point", "hand", "among", "along", "next",
-                 "across",
-                 "among", "among", "already", "early", "late", "approximately", "eventually", "later", "long",
-                 "shortly",
-                 "still", "suddenly", "sooner", "thereafter", "never", "before", "since", "after", "past", "soon",
+                 "across", "already", "early", "late", "approximately", "eventually", "later", "long",
+                 "shortly", "still", "suddenly", "sooner", "thereafter", "never", "before", "since", "after", "past", "soon",
                  "within"]
 
 unrelated_words = ["singer", "soccer", "boy", "girl", "george", "john", "man", "woman", "son", "daughter", "home",
-                   "house",
                    "town", "city", "island", "state", "district", "fort", "neighborhood", "stadium"]
 
 people_words = ["president", "instructor", "trainee", "worker", "team",
@@ -54,13 +46,11 @@ filler_words = ["good", "bad", "hard", "soft", "strong", "weak", "large", "small
                 "any", "every", "most", "more", "less"]
 
 abstract_words = ["try", "tried", "trying", "get", "getting", "go", "going", "come", "came", "became", "become",
-                  "allow",
-                  "allowed", "ensuring", "attempting", "attempt", "attempted", "ensure", "cause", "caused", "causing",
+                  "allow", "allowed", "ensuring",  "ensure", "cause", "caused", "causing",
                   "continue", "continued", "continued", "continuing"]
 
-other_domain_words = ["singer", "soccer", "patient", "rice", "george", "john", "maria", "war", "soldier", "bomb",
-                      "soviet", "japanese", "german", "british", "paris", "france",
-                      "rome", "london", "moscow", "tokyo", "american", "federal"]
+other_domain_words = ["singer", "soccer", "patient", "rice", "george", "john", "maria",
+                    "paris", "france", "rome", "london", "moscow", "tokyo"]
 
 ambiguous_words = ["thing", "something", "nothing", "everything", "stuff", "issue", "result", "factor", "reason"]
 
@@ -79,93 +69,90 @@ custom_stopwords = set(
     misc_words
 )
 
+#Create comprehensive patterns for each category
+patterns = {
+    'Weather-related': {
+        'keywords': ['storm', 'weather', 'lightning', 'thunderstorm', 'fog', 'rain', 'downdraft', 'wind',
+                        'turbulence', 'icing', 'snow', 'hail', 'struck', 'severe', 'cloud', 'visibility'],
+        'phrases': ['into a thunderstorm', 'struck by lightning', 'severe downdraft', 'weather conditions', 'unable to land because of clouds']
+    },
+    'Shot down/Military action': {
+        'keywords': ['shot', 'fire', 'british', 'german', 'navy', 'army', 'military', 'aircraft', 'anti-aircraft',
+                        'enemy', 'attack', 'combat', 'hit'],
+        'phrases': ['shot down', 'hit by', 'anti-aircraft fire', 'by british aircraft', 'by aircraft fire']
+    },
+    'Terrorism': {
+        'keywords': [
+            'bomb', 'terrorist', 'explosive', 'device', 'detonated', 'hijack', 'hijacked',
+            'sabotage', 'militant', 'extremist', 'terror', 'planted', 'exploded'
+        ],
+        'phrases': [
+            'explosive device', 'planted bomb', 'detonated a bomb', 'hijacked the aircraft',
+            'suspected terrorist attack', 'act of terrorism'
+        ]
+    },
+    'Explosion/Fire': {
+        'keywords': ['explode', 'explosion', 'fire', 'burn', 'flame', 'ignite', 'blast', 'caught'],
+        'phrases': ['exploded and', 'caught fire', 'burst into flames', 'ignited causing']
+    },
+    'Combustible gas failure': {
+        'keywords': ['hydrogen', 'gas', 'vented', 'ignited', 'sucked', 'combustible'],
+        'phrases': ['hydrogen gas', 'gas vented', 'vented was', 'sucked into', 'gas ignited']
+    },
+    'Fuel-related': {
+        'keywords': ['fuel', 'exhaustion', 'starvation', 'ran out'],
+        'phrases': ['ran out of fuel', 'fuel exhaustion', 'fuel starvation']
+    },
+    'Control loss': {
+        'keywords': ['control', 'lost', 'nose', 'dive', 'altitude', 'stall', 'spin', 'jambed', 'loss'],
+        'phrases': ['lost control', 'nose-dived', 'loss of control', 'controls jambed', 'dive into']
+    },
+    'Mechanical failure': {
+        'keywords': ['propeller', 'mechanical', 'failure', 'wire', 'structure', 'loose', 'separated', 'engine',
+                        'broke', 'malfunction', 'tearing'],
+        'phrases': ['propeller separated', 'mechanical failure', 'engine failure', 'structural failure',
+                    'tearing loose']
+    },
+    'Pilot error': {
+        'keywords': ['error', 'attempt', 'landing', 'reposition', 'maneuver', 'mistake', 'judgment', 'trying', 'navigational'],
+        'phrases': ['pilot error', 'pilot tried', 'attempting to land', 'tried to reposition', 'landing attempt']
+    },
+    'Test/Demonstration flight': {
+        'keywords': ['demonstration', 'test', 'show', 'display', 'experimental', 'prototype'],
+        'phrases': ['demonstration flight', 'test flight', 'air show', 'during a demonstration']
+    },
+    'Terrain collision': {
+        'keywords': ['mountain', 'ridge', 'hill', 'terrain', 'elevation', 'summit', 'cfit'],
+        'phrases': ['crashed into a mountain', 'into terrain', 'crashed into a ridge', 'controlled flight into terrain']
+    },
+    'Cargo mishandling': {
+        'keywords': ['cargo', 'improperly loaded', 'overloaded', 'shifted'],
+        'phrases': ['improperly loaded cargo', 'cargo shifted']
+    },
+    'Infrastructure collision': {
+        'keywords': ['house', 'building', 'shop', 'village', 'urban', 'structure', 'rooftop'],
+        'phrases': ['crashed into a village', 'into a building', 'into a shop', 'crashed into a house', 'into the roof']
+    }
+}
+
 CATEGORY_PRIORITY = [
     'Weather-related',
     'Mechanical failure',
     'Fuel-related',
     'Combustible gas failure',
     'Shot down/Military action',
-    'Cargo mishandling',
     'Pilot error',
     'Control loss',
     'Terrorism',
     'Terrain collision',
     'Infrastructure collision',
+    'Cargo mishandling',
     'Explosion/Fire',
     'Test/Demonstration flight',
     'Unclear cause'
 ]
 
 stop_words = set(stopwords.words('english')).union(custom_stopwords)
-
-
-def create_enhanced_category_patterns():
-    """Create comprehensive patterns for each category"""
-    patterns = {
-        'Weather-related': {
-            'keywords': ['storm', 'weather', 'lightning', 'thunderstorm', 'fog', 'rain', 'downdraft', 'wind',
-                         'turbulence', 'icing', 'snow', 'hail', 'struck', 'severe', 'cloud'],
-            'phrases': ['into a thunderstorm', 'struck by lightning', 'severe downdraft', 'weather conditions', 'unable to land because of clouds']
-        },
-        'Shot down/Military action': {
-            'keywords': ['shot', 'fire', 'british', 'german', 'navy', 'army', 'military', 'aircraft', 'anti-aircraft',
-                         'enemy', 'attack', 'combat', 'hit'],
-            'phrases': ['shot down', 'hit by', 'anti-aircraft fire', 'by british aircraft', 'by aircraft fire']
-        },
-        'Terrorism': {
-            'keywords': [
-                'bomb', 'terrorist', 'explosive', 'device', 'detonated', 'hijack', 'hijacked',
-                'sabotage', 'militant', 'extremist', 'terror', 'planted', 'exploded'
-            ],
-            'phrases': [
-                'explosive device', 'planted bomb', 'detonated a bomb', 'hijacked the aircraft',
-                'suspected terrorist attack', 'act of terrorism'
-            ]
-        },
-        'Explosion/Fire': {
-            'keywords': ['explode', 'explosion', 'fire', 'burn', 'flame', 'ignite', 'blast', 'caught'],
-            'phrases': ['exploded and', 'caught fire', 'burst into flames', 'ignited causing']
-        },
-        'Combustible gas failure': {
-            'keywords': ['hydrogen', 'gas', 'vented', 'ignited', 'sucked', 'combustible'],
-            'phrases': ['hydrogen gas', 'gas vented', 'vented was', 'sucked into', 'gas ignited']
-        },
-        'Fuel-related': {
-            'keywords': ['fuel', 'exhaustion', 'starvation', 'ran out'],
-            'phrases': ['ran out of fuel', 'fuel exhaustion', 'fuel starvation']
-        },
-        'Control loss': {
-            'keywords': ['control', 'lost', 'nose', 'dive', 'altitude', 'stall', 'spin', 'jambed', 'loss'],
-            'phrases': ['lost control', 'nose-dived', 'loss of control', 'controls jambed', 'dive into']
-        },
-        'Mechanical failure': {
-            'keywords': ['propeller', 'mechanical', 'failure', 'wire', 'structure', 'loose', 'separated', 'engine',
-                         'broke', 'malfunction', 'tearing'],
-            'phrases': ['propeller separated', 'mechanical failure', 'engine failure', 'structural failure',
-                        'tearing loose']
-        },
-        'Pilot error': {
-            'keywords': ['error', 'attempt', 'landing', 'reposition', 'maneuver', 'mistake', 'judgment', 'trying'],
-            'phrases': ['pilot error', 'pilot tried', 'attempting to land', 'tried to reposition', 'landing attempt']
-        },
-        'Test/Demonstration flight': {
-            'keywords': ['demonstration', 'test', 'show', 'display', 'experimental', 'prototype'],
-            'phrases': ['demonstration flight', 'test flight', 'air show', 'during a demonstration']
-        },
-        'Terrain collision': {
-            'keywords': ['mountain', 'ridge', 'hill', 'terrain', 'elevation', 'summit', 'cfit'],
-            'phrases': ['crashed into a mountain', 'into terrain', 'crashed into a ridge', 'controlled flight into terrain']
-        },
-        'Cargo mishandling': {
-            'keywords': ['cargo', 'improperly loaded', 'overloaded', 'shifted'],
-            'phrases': ['improperly loaded cargo', 'cargo shifted']
-        },
-        'Infrastructure collision': {
-            'keywords': ['house', 'building', 'shop', 'village', 'urban', 'structure', 'rooftop'],
-            'phrases': ['crashed into a village', 'into a building', 'into a shop', 'crashed into a house', 'into the roof']
-        }
-    }
-    return patterns
 
 
 def calculate_category_scores(text, patterns):
@@ -195,10 +182,8 @@ def hybrid_clustering_approach(df, summary_column):
     """Combine rule-based categorization with clustering validation"""
 
     # Step 1: Rule-based initial categorization
-    patterns = create_enhanced_category_patterns()
-
     def categorize_by_rules(text):
-        scores = calculate_category_scores(text, create_enhanced_category_patterns())
+        scores = calculate_category_scores(text, patterns)
 
         # Filter only categories with a non-zero score
         matched_categories = {cat: score for cat, score in scores.items() if score > 0}
