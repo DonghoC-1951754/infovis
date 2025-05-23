@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-export default function AircraftCrashVisualization() {
+export default function BarChartTotalNumberAccidentsPerManufacturer() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

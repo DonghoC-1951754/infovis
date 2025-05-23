@@ -8,7 +8,14 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch data from the specified endpoint
+  // Shared fixed color palette
+  const sharedColors = [
+    ...d3.schemeCategory10,
+    ...d3.schemeSet2,
+    ...d3.schemeSet3,
+  ];
+
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -43,7 +50,7 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
       return;
 
     d3.select(d3Container.current).selectAll("*").remove();
-    d3.select(legendContainer.current).selectAll("*").remove(); // clear legend separately
+    d3.select(legendContainer.current).selectAll("*").remove();
 
     const margin = { top: 25, right: 20, bottom: 60, left: 50 };
     const width = 1000 - margin.left - margin.right;
@@ -57,8 +64,21 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // Extract all manufacturers from data keys except "year"
+    const allManufacturers = Object.keys(data[0] || {}).filter(
+      (key) => key !== "year"
+    );
+
+    // Create color scale with full domain of all manufacturers and fixed range
+    const color = d3
+      .scaleOrdinal()
+      .domain(allManufacturers)
+      .range(sharedColors.slice(0, allManufacturers.length));
+
+    // Filter keys to only selected manufacturers
     const keys = Array.from(selectedManufacturers);
 
+    // Prepare filtered data for selected manufacturers
     const filteredData = data.map((d) => {
       const newData = { year: d.year };
       keys.forEach((key) => {
@@ -67,19 +87,20 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
       return newData;
     });
 
-    const color = d3.scaleOrdinal().domain(keys).range(d3.schemeSet2);
-
+    // X scale - year
     const x = d3
       .scaleLinear()
       .domain(d3.extent(data, (d) => d.year))
       .range([0, width]);
 
+    // Y scale - max accidents value
     const y = d3
       .scaleLinear()
       .domain([0, d3.max(filteredData, (d) => d3.max(keys, (key) => d[key]))])
       .nice()
       .range([height, 0]);
 
+    // Axis ticks for years every 5 years
     const years = d3.range(
       Math.ceil(d3.min(data, (d) => d.year) / 5) * 5,
       Math.floor(d3.max(data, (d) => d.year) / 5) * 5 + 5,
@@ -93,6 +114,7 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
 
     svg.append("g").call(d3.axisLeft(y).ticks(5));
 
+    // Axis labels
     svg
       .append("text")
       .attr("text-anchor", "end")
@@ -108,6 +130,7 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
       .style("font-size", "16px")
       .text("Number of accidents");
 
+    // Line generator
     const line = d3
       .line()
       .x((d) => x(d.year))
@@ -136,6 +159,7 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
         .style("stroke-dashoffset", 0);
     });
 
+    // Focus group for mouseover circles
     const focusGroup = svg.append("g").style("display", "none");
 
     const focusCircles = keys.map((key) =>
@@ -147,6 +171,7 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
         .style("stroke-width", 1)
     );
 
+    // Tooltip group
     const tooltip = svg
       .append("g")
       .attr("class", "tooltip")
@@ -213,7 +238,7 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
         );
       });
 
-    // Render HTML-based legend outside of SVG
+    // Render HTML legend
     const legend = d3.select(legendContainer.current);
 
     keys.forEach((key) => {

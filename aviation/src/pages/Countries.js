@@ -6,9 +6,14 @@ import * as d3 from "d3";
 const Countries = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState(null);
 
   const handleFilter = (data) => {
     setData(data);
+  };
+
+  const handleCountrySelect = (countryName) => {
+    setSelectedCountry(countryName);
   };
 
   const getColor = (count) => {
@@ -73,8 +78,94 @@ const Countries = () => {
           const count = country ? country.Count : 0;
           return getColor(count);
         })
-        .attr("stroke", "#FFFFFF")
-        .attr("stroke-width", 0.5);
+        .attr("stroke", (d) => {
+          const countryName = d.properties.name;
+          const countryNameLong = d.properties.name_long;
+
+          const country = data.find(
+            (item) =>
+              item["Operator Country"].toLowerCase() ===
+                countryName.toLowerCase() ||
+              item["Operator Country"].toLowerCase() ===
+                countryNameLong.toLowerCase()
+          );
+
+          const isSelected =
+            country && selectedCountry === country["Operator Country"];
+          return isSelected ? "#ff6b35" : "#FFFFFF";
+        })
+        .attr("stroke-width", (d) => {
+          const countryName = d.properties.name;
+          const countryNameLong = d.properties.name_long;
+
+          const country = data.find(
+            (item) =>
+              item["Operator Country"].toLowerCase() ===
+                countryName.toLowerCase() ||
+              item["Operator Country"].toLowerCase() ===
+                countryNameLong.toLowerCase()
+          );
+
+          const isSelected =
+            country && selectedCountry === country["Operator Country"];
+          return isSelected ? 3 : 0.5;
+        })
+        .style("cursor", "pointer")
+        .on("click", function (event, d) {
+          const countryName = d.properties.name;
+          const countryNameLong = d.properties.name_long;
+
+          const country = data.find(
+            (item) =>
+              item["Operator Country"].toLowerCase() ===
+                countryName.toLowerCase() ||
+              item["Operator Country"].toLowerCase() ===
+                countryNameLong.toLowerCase()
+          );
+
+          if (country) {
+            const newSelection =
+              selectedCountry === country["Operator Country"]
+                ? null
+                : country["Operator Country"];
+            setSelectedCountry(newSelection);
+          }
+        })
+        .on("mouseover", function (event, d) {
+          const countryName = d.properties.name;
+          const countryNameLong = d.properties.name_long;
+
+          const country = data.find(
+            (item) =>
+              item["Operator Country"].toLowerCase() ===
+                countryName.toLowerCase() ||
+              item["Operator Country"].toLowerCase() ===
+                countryNameLong.toLowerCase()
+          );
+
+          if (country) {
+            d3.select(this).attr("stroke-width", 2).attr("stroke", "#333");
+          }
+        })
+        .on("mouseout", function (event, d) {
+          const countryName = d.properties.name;
+          const countryNameLong = d.properties.name_long;
+
+          const country = data.find(
+            (item) =>
+              item["Operator Country"].toLowerCase() ===
+                countryName.toLowerCase() ||
+              item["Operator Country"].toLowerCase() ===
+                countryNameLong.toLowerCase()
+          );
+
+          const isSelected =
+            country && selectedCountry === country["Operator Country"];
+
+          d3.select(this)
+            .attr("stroke", isSelected ? "#ff6b35" : "#FFFFFF")
+            .attr("stroke-width", isSelected ? 3 : 0.5);
+        });
     });
 
     // Zoom functionality
@@ -145,7 +236,7 @@ const Countries = () => {
       .call(xAxis)
       .selectAll("text")
       .style("font-size", "10px");
-  }, [data]);
+  }, [data, selectedCountry]);
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -164,7 +255,11 @@ const Countries = () => {
         ></div>
       </div>
 
-      <CountriesFilter onDateChange={handleFilter} />
+      <CountriesFilter
+        onDateChange={handleFilter}
+        selectedCountry={selectedCountry}
+        onCountrySelect={handleCountrySelect}
+      />
     </div>
   );
 };
