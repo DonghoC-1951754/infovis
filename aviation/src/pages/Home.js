@@ -97,7 +97,7 @@ const Home = () => {
       .attr("text-anchor", "middle")
       .style("font-size", "18px")
       .style("font-weight", "bold")
-      .text("K-means Clustering of Aircraft Crash Summaries");
+      .text("Clustering by accidents for aircraft crash summaries");
     
     // Main chart area group with margins
     const chartArea = svg.append("g")
@@ -382,77 +382,503 @@ const Home = () => {
     
     const distribution = clusterData.kmeans.distribution;
     
-    // Use all clusters for the distribution chart (not just selected ones)
-    const allCategories = Object.keys(distribution);
+    // Get cluster data and create enhanced dataset - SHOW ALL CLUSTERS
+    const clusters = clusterData.kmeans.clusters || [];
+    const enhancedData = clusters.map(cluster => ({
+      id: cluster.id,
+      interpretation: cluster.interpretation || 'Unknown',
+      count: distribution[cluster.interpretation] || 0,
+      size: cluster.size || 0,
+      isSelected: selectedClusters.includes(cluster.id),
+      terms: cluster.terms || []
+    })).sort((a, b) => a.id - b.id); // Sort by cluster ID
     
-    // Calculate counts using all data
-    const counts = allCategories.map(category => distribution[category]);
+    // Calculate totals for subtitle
+    const selectedData = enhancedData.filter(d => d.isSelected);
+    const selectedTotalCount = selectedData.reduce((sum, d) => sum + d.count, 0);
+    const allTotalCount = enhancedData.reduce((sum, d) => sum + d.count, 0);
+    const selectedClustersCount = selectedData.length;
+    const totalClustersCount = enhancedData.length;
     
     // Get responsive dimensions
     const container = distributionChartRef.current.parentElement;
     const containerWidth = container.clientWidth;
-    const width = Math.max(containerWidth - 40, 600);
-    const height = 400;
-    const margin = { top: 40, right: 30, bottom: 120, left: 60 };
+    const width = Math.max(containerWidth - 40, 800);
+    const height = 500;
+    const margin = { top: 60, right: 30, bottom: 140, left: 80 };
     
-    // Create SVG
+    // Create main SVG
     const svg = d3.select(distributionChartRef.current)
       .append("svg")
       .attr("width", width)
       .attr("height", height)
-      .append("g")
+      .style("border", "2px solid #d1d5db")
+      .style("border-radius", "8px")
+      .style("background-color", "#ffffff");
+    
+    // Check if no data exists
+    if (enhancedData.length === 0) {
+      // Show message for no data
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height / 2 - 20)
+        .attr("text-anchor", "middle")
+        .style("font-size", "18px")
+        .style("font-weight", "bold")
+        .style("fill", "#666")
+        .text("No cluster data available");
+      
+      return;
+    }
+    
+    const chartArea = svg.append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
     
-    // Set up scales
+    // Create same color scale as scatterplot
+    const clusterIds = [...new Set(clusterData.points.map(d => d.kmeans_cluster))];
+    const color = d3.scaleOrdinal()
+      .domain(clusterIds)
+      .range(d3.schemeCategory10);
+    
+    // Set up scales - use count values for Y axis
     const x = d3.scaleBand()
-      .domain(allCategories)
+      .domain(enhancedData.map(d => d.id))
       .range([0, width - margin.left - margin.right])
-      .padding(0.2);
+      .padding(0.3);
       
     const y = d3.scaleLinear()
-      .domain([0, d3.max(counts) || 1])
+      .domain([0, d3.max(enhancedData, d => d.count) * 1.1 || 1])
       .range([height - margin.top - margin.bottom, 0]);
     
-    // Add X axis
-    svg.append("g")
-      .attr("transform", `translate(0, ${height - margin.top - margin.bottom})`)
-      .call(d3.axisBottom(x))
-      .selectAll("text")
-      .attr("transform", "rotate(-45)")
-      .attr("text-anchor", "end")
-      .attr("x", -8)
-      .attr("y", 6);
+    // Add X axis with enhanced styling
+    const xAxis = chartArea.append("g")
+      .attr("transform", `translate(0, ${height - margin.top - margin.bottom})`);
+      
+    xAxis.selectAll(".tick")
+      .data(enhancedData)
+      .enter()
+      .append("g")
+      .attr("class", "tick")
+      .attr("transform", d => `translate(${x(d.id) + x.bandwidth()/2}, 0)`)
+      .style("opacity", d => d.isSelected ? 1 : 0.4) // Gray out unselected cluster labels
+      .each(function(d) {
+        const tick = d3.select(this);
+        
+        // Add tick line
+        tick.append("line")
+          .attr("y1", 0)
+          .attr("y2", 6)
+          .attr("stroke", "#666")
+          .attr("stroke-width", 1);
+        
+        // Add cluster number
+        tick.append("text")
+          .attr("y", 20)
+          .attr("text-anchor", "middle")
+          .style("fill", "#333")
+          .style("font-size", "14px")
+          .style("font-weight", d.isSelected ? "bold" : "normal")
+          .text(`#${d.id}`);
+        
+        // Add category name (wrapped)
+        const words = d.interpretation.split(' ');
+        const maxWidth = x.bandwidth();
+        let line = [];
+        let lineNumber = 0;
+        const lineHeight = 12;
+        
+        words.forEach(word => {
+          const testLine = [...line, word].join(' ');
+          if (testLine.length * 6 > maxWidth && line.length > 0) {
+            tick.append("text")
+              .attr("y", 35 + lineNumber * lineHeight)
+              .attr("text-anchor", "middle")
+              .style("fill", "#666")
+              .style("font-size", "10px")
+              .text(line.join(' '));
+            line = [word];
+            lineNumber++;
+          } else {
+            line.push(word);
+          }
+        });
+        
+        if (line.length > 0) {
+          tick.append("text")
+            .attr("y", 35 + lineNumber * lineHeight)
+            .attr("text-anchor", "middle")
+            .style("fill", "#666")
+            .style("font-size", "10px")
+            .text(line.join(' '));
+        }
+      });
     
-    // Add Y axis
-    svg.append("g")
-      .call(d3.axisLeft(y))
-      .append("text")
-      .attr("fill", "#000")
+    // Add Y axis with enhanced styling - show count values
+    const yAxis = chartArea.append("g")
+      .call(d3.axisLeft(y).ticks(8).tickFormat(d3.format("d")))
+      .style("color", "#333");
+      
+    yAxis.selectAll("line")
+      .style("stroke", "#ccc")
+      .style("stroke-width", 1);
+      
+    yAxis.selectAll("text")
+      .style("fill", "#333")
+      .style("font-size", "12px");
+      
+    // Add Y axis label
+    yAxis.append("text")
+      .attr("fill", "#333")
       .attr("transform", "rotate(-90)")
-      .attr("y", -40)
+      .attr("y", -50)
       .attr("x", -(height - margin.top - margin.bottom) / 2)
       .attr("text-anchor", "middle")
-      .text("Number of Crashes");
-    
-    // Add bars
-    svg.selectAll("rect")
-      .data(allCategories)
-      .enter()
-      .append("rect")
-      .attr("x", d => x(d))
-      .attr("y", d => y(distribution[d]))
-      .attr("width", x.bandwidth())
-      .attr("height", d => height - margin.top - margin.bottom - y(distribution[d]))
-      .attr("fill", "skyblue");
-    
-    // Add title
-    svg.append("text")
-      .attr("x", (width - margin.left - margin.right) / 2)
-      .attr("y", -15)
-      .attr("text-anchor", "middle")
-      .style("font-size", "16px")
+      .style("font-size", "14px")
       .style("font-weight", "bold")
-      .text("Distribution of Aircraft Crash Causes");
+      .text("Number of Incidents");
+    
+    // Create tooltip without background
+    let tooltip = d3.select("body").select(".distribution-tooltip");
+    if (tooltip.empty()) {
+      tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "distribution-tooltip")
+        .style("position", "absolute")
+        .style("color", "black")
+        .style("padding", "12px")
+        .style("border-radius", "6px")
+        .style("background-color", "white")
+        .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
+        .style("pointer-events", "none")
+        .style("opacity", 0)
+        .style("max-width", "300px")
+        .style("font-size", "12px")
+        .style("z-index", "1000");
+    }
+    
+    // Add bars with animations and interactions - FOR ALL CLUSTERS
+    const bars = chartArea.selectAll(".bar")
+      .data(enhancedData)
+      .enter()
+      .append("g")
+      .attr("class", "bar")
+      .style("cursor", "pointer");
+    
+    // Add background bars for animation effect
+    bars.append("rect")
+      .attr("class", "bar-bg")
+      .attr("x", d => x(d.id))
+      .attr("y", 0)
+      .attr("width", x.bandwidth())
+      .attr("height", height - margin.top - margin.bottom)
+      .attr("fill", "rgba(255,255,255,0.05)");
+    
+    // Add main bars - with conditional styling for selected/unselected
+    const mainBars = bars.append("rect")
+      .attr("class", "bar-main")
+      .attr("x", d => x(d.id))
+      .attr("y", height - margin.top - margin.bottom)
+      .attr("width", x.bandwidth())
+      .attr("height", 0)
+      .attr("fill", d => d.isSelected ? color(d.id) : "#d1d5db") // Gray for unselected
+      .style("opacity", d => d.isSelected ? 1 : 0.5) // More transparent for unselected
+      .style("filter", d => d.isSelected ? "url(#glow)" : "none"); // No glow for unselected
+    
+    // Animate bars
+    mainBars.transition()
+      .duration(1000)
+      .delay((d, i) => i * 100)
+      .ease(d3.easeBounceOut)
+      .attr("y", d => y(d.count))
+      .attr("height", d => height - margin.top - margin.bottom - y(d.count));
+    
+    // Add count labels on bars - show percentage on top, only for selected clusters
+    const labels = bars.append("text")
+      .attr("class", "bar-label")
+      .attr("x", d => x(d.id) + x.bandwidth() / 2)
+      .attr("y", d => y(d.count) - 10)
+      .attr("text-anchor", "middle")
+      .style("fill", d => d.isSelected ? "#333" : "#999")
+      .style("font-size", "12px")
+      .style("font-weight", d => d.isSelected ? "bold" : "normal")
+      .style("opacity", 0)
+      .text(d => {
+        if (d.isSelected && selectedTotalCount > 0) {
+          const percentage = (d.count / selectedTotalCount * 100);
+          return `${percentage.toFixed(1)}%`;
+        } else if (!d.isSelected && allTotalCount > 0) {
+          const percentage = (d.count / allTotalCount * 100);
+          return `${percentage.toFixed(1)}%`;
+        }
+        return '';
+      });
+    
+    // Animate labels
+    labels.transition()
+      .duration(1000)
+      .delay((d, i) => i * 100 + 500)
+      .style("opacity", d => d.isSelected ? 1 : 0.6);
+    
+    // Add hover interactions - disabled during initial animation
+    let animationComplete = false;
+    
+    // Enable interactions after animation completes
+    setTimeout(() => {
+      animationComplete = true;
+    }, 1000 + (enhancedData.length * 100) + 200); // Animation duration + delays + buffer
+    
+    bars.on("mouseover", function(event, d) {
+      if (!animationComplete) return; // Prevent hover during animation
+      
+      // Highlight bar with slight opacity change
+      d3.select(this).select(".bar-main")
+        .transition()
+        .duration(200)
+        .style("opacity", d.isSelected ? 0.8 : 0.7);
+      
+      // Show tooltip
+      const topTerms = d.terms.slice(0, 5).map(term => 
+        typeof term === 'object' ? term.term : term
+      ).join(', ');
+      
+      // Calculate percentage based on context (selected vs all)
+      const contextPercentage = d.isSelected && selectedTotalCount > 0 
+        ? (d.count / selectedTotalCount * 100).toFixed(1)
+        : allTotalCount > 0 
+        ? (d.count / allTotalCount * 100).toFixed(1)
+        : '0.0';
+      
+      tooltip
+        .html(`
+          <div style="margin-bottom: 8px;">
+            <strong>Cluster ${d.id}:</strong> ${d.interpretation}
+          </div>
+          <div style="margin-bottom: 6px;">
+            <strong>Status:</strong> ${d.isSelected ? 'Selected' : 'Unselected'}
+          </div>
+          <div style="margin-bottom: 6px;">
+            <strong>Incidents:</strong> ${d.count} (${contextPercentage}%)
+          </div>
+          <div style="margin-bottom: 6px;">
+            <strong>Cluster Size:</strong> ${d.size} points
+          </div>
+          ${topTerms ? `<div style="margin-bottom: 6px;">
+            <strong>Key Terms:</strong> ${topTerms}
+          </div>` : ''}
+          <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.3); font-size: 11px;">
+            Click to ${d.isSelected ? 'deselect' : 'select'}
+          </div>
+        `)
+        .style("left", (event.pageX + 15) + "px")
+        .style("top", (event.pageY - 10) + "px")
+        .style("opacity", 1);
+    })
+    .on("mouseout", function(event, d) {
+      if (!animationComplete) return; // Prevent hover during animation
+      
+      // Reset bar
+      d3.select(this).select(".bar-main")
+        .transition()
+        .duration(200)
+        .style("opacity", d.isSelected ? 1 : 0.5);
+      
+      // Hide tooltip
+      tooltip.style("opacity", 0);
+    })
+    .on("click", function(event, d) {
+      if (!animationComplete) return; // Prevent clicks during animation
+      
+      // Toggle cluster selection
+      handleClusterToggle(d.id);
+      
+      // Add subtle click feedback
+      d3.select(this).select(".bar-main")
+        .transition()
+        .duration(150)
+        .style("opacity", 0.6)
+        .transition()
+        .duration(150)
+        .style("opacity", d.isSelected ? 1 : 0.5);
+    });
+    
+    // Add control buttons
+    const buttonGroup = svg.append("g")
+      .attr("class", "control-buttons")
+      .attr("transform", `translate(${width - 200}, 15)`);
+    
+    // Select All button
+    const selectAllButton = buttonGroup.append("g")
+      .attr("class", "select-all-btn")
+      .style("cursor", "pointer")
+      .style("opacity", 0);
+
+    const selectAllRect = selectAllButton.append("rect")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 85)
+      .attr("height", 25)
+      .attr("rx", 4)
+      .attr("fill", "#dbeafe")  // Tailwind bg-blue-100
+      .attr("stroke", "#bfdbfe") // Slight blue border
+      .attr("stroke-width", 1);
+
+    selectAllButton.append("text")
+      .attr("x", 42.5)
+      .attr("y", 16)
+      .attr("text-anchor", "middle")
+      .style("fill", "#1e40af")  // Tailwind text-blue-800
+      .style("font-size", "11px")
+      .style("font-weight", "bold")
+      .text("Select All");
+
+    selectAllButton
+      .on("mouseover", function() {
+        d3.select(this).select("rect")
+          .transition()
+          .duration(200)
+          .attr("fill", "#bfdbfe"); // Tailwind hover:bg-blue-200
+      })
+      .on("mouseout", function() {
+        d3.select(this).select("rect")
+          .transition()
+          .duration(200)
+          .attr("fill", "#dbeafe"); // Tailwind bg-blue-100
+      })
+      .on("click", function(event) {
+        event.stopPropagation();
+        const allClusterIds = enhancedData.map(d => d.id);
+        if (typeof handleSelectAllClusters === 'function') {
+          handleSelectAllClusters(allClusterIds);
+        } else {
+          allClusterIds.forEach(id => {
+            if (!selectedClusters.includes(id)) {
+              handleClusterToggle(id);
+            }
+          });
+        }
+
+        // Visual feedback on click
+        d3.select(this).select("rect")
+          .transition()
+          .duration(150)
+          .attr("fill", "#93c5fd") // Optional deeper blue for click feedback
+          .transition()
+          .duration(150)
+          .attr("fill", "#bfdbfe"); // Back to hover blue
+      });
+
+
+    
+    // Deselect All / Clear All button
+    const deselectAllButton = buttonGroup.append("g")
+      .attr("class", "deselect-all-btn")
+      .attr("transform", "translate(95, 0)")
+      .style("cursor", "pointer")
+      .style("opacity", 0);
+
+    const deselectAllRect = deselectAllButton.append("rect")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", 85)
+      .attr("height", 25)
+      .attr("rx", 4)
+      .attr("fill", "#f3f4f6")  // Tailwind bg-gray-100
+      .attr("stroke", "#e5e7eb") // Light border (gray-200)
+      .attr("stroke-width", 1);
+
+    deselectAllButton.append("text")
+      .attr("x", 42.5)
+      .attr("y", 16)
+      .attr("text-anchor", "middle")
+      .style("fill", "#1f2937")  // Tailwind text-gray-800
+      .style("font-size", "11px")
+      .style("font-weight", "bold")
+      .text("Clear All");
+
+    deselectAllButton
+      .on("mouseover", function() {
+        d3.select(this).select("rect")
+          .transition()
+          .duration(200)
+          .attr("fill", "#e5e7eb"); // Tailwind hover:bg-gray-200
+      })
+      .on("mouseout", function() {
+        d3.select(this).select("rect")
+          .transition()
+          .duration(200)
+          .attr("fill", "#f3f4f6"); // Tailwind bg-gray-100
+      })
+      .on("click", function(event) {
+        event.stopPropagation();
+        if (typeof handleDeselectAllClusters === 'function') {
+          handleDeselectAllClusters();
+        } else {
+          [...selectedClusters].forEach(id => {
+            handleClusterToggle(id);
+          });
+        }
+
+        // Visual feedback
+        d3.select(this).select("rect")
+          .transition()
+          .duration(150)
+          .attr("fill", "#d1d5db") // darker gray for click
+          .transition()
+          .duration(150)
+          .attr("fill", "#e5e7eb"); // back to hover gray
+      });
+
+    
+    // Animate buttons
+    selectAllButton.transition()
+      .duration(800)
+      .delay(600)
+      .style("opacity", 1);
+      
+    deselectAllButton.transition()
+      .duration(800)
+      .delay(700)
+      .style("opacity", 1);
+
+    // Add title with animation
+    const title = svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", 30)
+      .attr("text-anchor", "middle")
+      .style("font-size", "18px")
+      .style("font-weight", "bold")
+      .style("fill", "#333")
+      .style("opacity", 0)
+      .text("Cluster Distribution (Selected vs All Clusters)");
+    
+    title.transition()
+      .duration(1000)
+      .delay(500)
+      .style("opacity", 1);
+    
+    // Add updated subtitle with proper variable calculations
+    const subtitle = svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", height - 15)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("fill", "#666")
+      .style("opacity", 0)
+      .text(() => {
+        if (selectedClustersCount === 0) {
+          return `No clusters selected - Showing all ${totalClustersCount} clusters (${allTotalCount} total incidents)`;
+        } else if (selectedClustersCount === totalClustersCount) {
+          return `All ${totalClustersCount} clusters selected (${allTotalCount} total incidents)`;
+        } else {
+          const selectedPercentage = allTotalCount > 0 ? (selectedTotalCount/allTotalCount*100).toFixed(1) : '0.0';
+          return `${selectedClustersCount} of ${totalClustersCount} clusters selected (${selectedTotalCount} of ${allTotalCount} incidents - ${selectedPercentage}%)`;
+        }
+      });
+    
+    subtitle.transition()
+      .duration(1000)
+      .delay(700)
+      .style("opacity", 1);
   };
   
   // Handle cluster selection
@@ -464,6 +890,14 @@ const Home = () => {
         return [...prev, clusterId];
       }
     });
+  };
+
+  const handleSelectAllClusters = (allIds) => {
+    setSelectedClusters(allIds);
+  };
+
+  const handleDeselectAllClusters = () => {
+    setSelectedClusters([]);
   };
   
   // Select all clusters - maintain numerical order
@@ -502,7 +936,7 @@ const Home = () => {
               {clusterData && clusterData.points ? (
                 <div className="bg-white rounded-lg shadow-md flex flex-col h-[calc(100vh-200px)]">
                   <div className="p-6 pb-4">
-                    <h2 className="text-xl font-semibold mb-4">Cluster Visualization</h2>
+                    <h2 className="text-xl font-semibold mb-4">Accident Cluster Visualization</h2>
                   </div>
                   
                   {/* Responsive layout: Left panel for controls, Right side for graph */}
