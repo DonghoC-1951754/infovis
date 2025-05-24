@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import SidePanel from "../components/Sidepanel";
+import TemporalTrendsVisualization from "../components/TemporalTrendsVisualization";
+import CountryClusterDistribution from "../components/CountryClusterDistribution";
 import * as d3 from "d3";
 
 const Home = () => {
@@ -177,10 +179,28 @@ const Home = () => {
           .attr("r", hoverSize)
           .style("opacity", 1);
           
+        let tooltipContent = `<strong>Cluster:</strong> ${d.kmeans_cluster}<br>
+                             <strong>Category:</strong> ${d.kmeans_interpretation || 'Unknown'}<br>`;
+        
+        if (d.Date) {
+          tooltipContent += `<strong>Date:</strong> ${d.Date}<br>`;
+        }
+        else {
+          tooltipContent += `<strong>Date:</strong> Not available<br>`;
+        }
+        
+        if (d.operator_country) {
+          tooltipContent += `<strong>Operator Country:</strong> ${d.operator_country}<br>`;
+        }
+        
+        if (d.fatalities !== null && d.fatalities !== undefined) {
+          tooltipContent += `<strong>Fatalities:</strong> ${d.fatalities}<br>`;
+        }
+        
+        tooltipContent += `<strong>Summary:</strong> ${d.summary ? d.summary.substring(0, 150) + (d.summary.length > 150 ? '...' : '') : 'No summary available'}`;
+        
         tooltip
-          .html(`<strong>Cluster:</strong> ${d.kmeans_cluster}<br>
-                 <strong>Category:</strong> ${d.kmeans_interpretation || 'Unknown'}<br>
-                 <strong>Summary:</strong> ${d.summary ? d.summary.substring(0, 150) + (d.summary.length > 150 ? '...' : '') : 'No summary available'}`)
+          .html(tooltipContent)
           .style("left", (event.pageX + 15) + "px")
           .style("top", (event.pageY - 10) + "px")
           .style("opacity", 1);
@@ -603,10 +623,8 @@ const Home = () => {
       .style("font-weight", d => d.isSelected ? "bold" : "normal")
       .style("opacity", 0)
       .text(d => {
-        if (d.isSelected && selectedTotalCount > 0) {
-          const percentage = (d.count / selectedTotalCount * 100);
-          return `${percentage.toFixed(1)}%`;
-        } else if (!d.isSelected && allTotalCount > 0) {
+        // Always calculate percentage based on total count from all clusters
+        if (allTotalCount > 0) {
           const percentage = (d.count / allTotalCount * 100);
           return `${percentage.toFixed(1)}%`;
         }
@@ -642,9 +660,7 @@ const Home = () => {
       ).join(', ');
       
       // Calculate percentage based on context (selected vs all)
-      const contextPercentage = d.isSelected && selectedTotalCount > 0 
-        ? (d.count / selectedTotalCount * 100).toFixed(1)
-        : allTotalCount > 0 
+      const contextPercentage = allTotalCount > 0 
         ? (d.count / allTotalCount * 100).toFixed(1)
         : '0.0';
       
@@ -769,7 +785,7 @@ const Home = () => {
 
 
     
-    // Deselect All / Clear All button
+    // Deselect All button
     const deselectAllButton = buttonGroup.append("g")
       .attr("class", "deselect-all-btn")
       .attr("transform", "translate(95, 0)")
@@ -1012,18 +1028,21 @@ const Home = () => {
                                   </div>
                                 )}
                                 
-                                {selectedPoint.summary && (
+                                {selectedPoint.Date && (
                                   <div>
-                                    <span className="font-medium">Summary:</span>
-                                    <p className="mt-1 text-gray-600 leading-relaxed">
-                                      {selectedPoint.summary}
-                                    </p>
+                                    <span className="font-medium">Date:</span> {selectedPoint.Date}
                                   </div>
                                 )}
                                 
-                                {selectedPoint.date && (
+                                {selectedPoint.operator_country && selectedPoint.operator_country !== 'Unknown' && (
                                   <div>
-                                    <span className="font-medium">Date:</span> {selectedPoint.date}
+                                    <span className="font-medium">Operator Country:</span> {selectedPoint.operator_country}
+                                  </div>
+                                )}
+                                
+                                {selectedPoint.fatalities !== null && selectedPoint.fatalities !== undefined && (
+                                  <div>
+                                    <span className="font-medium">Fatalities:</span> {selectedPoint.fatalities}
                                   </div>
                                 )}
                                 
@@ -1039,18 +1058,14 @@ const Home = () => {
                                   </div>
                                 )}
                                 
-                                {selectedPoint.fatalities !== undefined && (
+                                {selectedPoint.summary && (
                                   <div>
-                                    <span className="font-medium">Fatalities:</span> {selectedPoint.fatalities}
+                                    <span className="font-medium">Summary:</span>
+                                    <p className="mt-1 text-gray-600 leading-relaxed">
+                                      {selectedPoint.summary}
+                                    </p>
                                   </div>
                                 )}
-                                
-                                <div className="pt-2 border-t border-gray-200">
-                                  <span className="font-medium">Coordinates:</span> 
-                                  <span className="text-gray-600">
-                                    ({selectedPoint.x?.toFixed(3)}, {selectedPoint.y?.toFixed(3)})
-                                  </span>
-                                </div>
                               </div>
                             </div>
                           ) : (
@@ -1092,51 +1107,21 @@ const Home = () => {
                   Missing distribution data for visualization
                 </div>
               )}
-              
-              {clusterData && clusterData.kmeans && clusterData.kmeans.clusters ? (
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                  <h2 className="text-xl font-semibold mb-4">Top Clusters</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {clusterData.kmeans.clusters
-                      .sort((a, b) => b.size - a.size)
-                      .slice(0, 6)
-                      .map(cluster => (
-                        <div 
-                          key={cluster.id} 
-                          className={`border rounded-lg p-4 ${selectedClusters.includes(cluster.id) ? 'border-blue-500' : 'border-gray-200'}`}
-                        >
-                          <h3 className="font-medium text-lg">Cluster {cluster.id}: {cluster.interpretation}</h3>
-                          <p className="text-sm text-gray-600 mt-1">Size: {cluster.size} incidents</p>
-                          {cluster.terms && (
-                            <div className="mt-3">
-                              <h4 className="font-medium">Top Terms:</h4>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {cluster.terms.slice(0, 8).map((term, i) => (
-                                  <span 
-                                    key={i} 
-                                    className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-                                  >
-                                    {typeof term === 'object' ? term.term : term}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {cluster.samples && cluster.samples.length > 0 && (
-                            <div className="mt-3">
-                              <h4 className="font-medium">Sample incident:</h4>
-                              <p className="text-sm mt-1 text-gray-700 italic line-clamp-3">
-                                {cluster.samples[0]}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                </div>
+              {clusterData && selectedClusters.length > 0 ? (
+                <TemporalTrendsVisualization 
+                  clusterData={clusterData} 
+                  selectedClusters={selectedClusters} 
+                />
               ) : (
                 <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-                  Missing cluster data
+                  Please select at least one cluster to view temporal trends
+                </div>
+              )}
+              {clusterData ? (
+                <CountryClusterDistribution clusterData={clusterData} />
+              ) : (
+                <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                  Loading country distribution data...
                 </div>
               )}
             </div>

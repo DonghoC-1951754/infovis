@@ -122,7 +122,15 @@ def get_cluster_data():
                 "y": float(row.get('y', 0)),
                 "kmeans_cluster": int(row.get('kmeans_cluster', 0)),
                 "kmeans_interpretation": row.get('kmeans_cluster_interpretation', "Unknown"),
-                "summary": row.get('Summary', "")
+                "summary": row.get('Summary', ""),
+                "Year": int(row.get('Year', 0)) if pd.notna(row.get('Year')) else None,
+                "Date": str(row.get('Date', "")) if pd.notna(row.get('Date')) else None,
+                "location": str(row.get('Location', "")) if pd.notna(row.get('Location')) else None,
+                "aircraft_type": str(row.get('AC Type', "")) if pd.notna(row.get('AC Type')) else None,
+                "fatalities": int(row.get('Fatalities', 0)) if pd.notna(row.get('Fatalities')) and str(row.get('Fatalities')).isdigit() else None,
+                "operator": str(row.get('Operator', "")) if pd.notna(row.get('Operator')) else None,
+                "operator_country": str(row.get('Operator Country', "")) if pd.notna(row.get('Operator Country')) else "Unknown",
+                "date": str(row.get('Date', "")) if pd.notna(row.get('Date')) else None
             })
 
         distribution = df['kmeans_cluster_interpretation'].value_counts().to_dict()
