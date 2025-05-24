@@ -17,12 +17,14 @@ const Countries = () => {
   };
 
   const getColor = (count) => {
-    return count
-      ? d3
-          .scaleLinear()
-          .domain([0, Math.max(...data.map((item) => item.Count))])
-          .range(["#f1a1a1", "#8b0000"])(count)
-      : "#f2f0f7";
+    if (!count) return "#f2f0f7";
+    
+    const maxCount = Math.max(...data.map((item) => item.Count));
+    const logScale = d3.scaleLog()
+      .domain([1, maxCount])
+      .range(["#f1a1a1", "#8b0000"]);
+    
+    return logScale(count);
   };
 
   useEffect(() => {
@@ -164,6 +166,8 @@ const Countries = () => {
       });
     svg.call(zoom);
 
+    // Replace your legend creation section with this:
+
     // Clean old legend
     d3.select("#legend").selectAll("*").remove();
 
@@ -179,18 +183,38 @@ const Countries = () => {
 
     const defs = svgLegend.append("defs");
 
+    const minVal = Math.max(1, d3.min(data, (d) => d.Count));
+    const maxVal = d3.max(data, (d) => d.Count);
+
+    // Create logarithmic scale for color positioning
+    const logScale = d3.scaleLog()
+      .domain([minVal, maxVal])
+      .range([0, 1]); // 0 to 1 for gradient percentages
+
+    // Create gradient with logarithmically distributed color stops
     const gradient = defs
       .append("linearGradient")
       .attr("id", "legend-gradient")
       .attr("x1", "0%")
       .attr("x2", "100%");
 
-    gradient.append("stop").attr("offset", "0%").attr("stop-color", "#f2f0f7"); // Light color
-
-    gradient
-      .append("stop")
-      .attr("offset", "100%")
-      .attr("stop-color", "#8b0000"); // Dark red
+    // Create multiple color stops distributed logarithmically
+    const numStops = 20; // More stops = smoother gradient
+    for (let i = 0; i <= numStops; i++) {
+      const logValue = minVal * Math.pow(maxVal / minVal, i / numStops);
+      const position = logScale(logValue) * 100; // Convert to percentage
+      
+      // Use the same color scale as your map
+      const mapLogScale = d3.scaleLog()
+        .domain([minVal, maxVal])
+        .range(["#f2f0f7", "#8b0000"]);
+      
+      const color = mapLogScale(logValue);
+      
+      gradient.append("stop")
+        .attr("offset", `${position}%`)
+        .attr("stop-color", color);
+    }
 
     svgLegend
       .append("rect")
@@ -200,17 +224,45 @@ const Countries = () => {
       .attr("height", legendHeight)
       .style("fill", "url(#legend-gradient)");
 
-    const minVal = d3.min(data, (d) => d.Count);
-    const maxVal = d3.max(data, (d) => d.Count);
-
+    // Now create logarithmic scale for tick positioning
     const xScale = d3
-      .scaleLinear()
+      .scaleLog()
       .domain([minVal, maxVal])
       .range([0, legendWidth]);
 
-    const tickValues = d3
-      .range(0, 6)
-      .map((i) => Math.round(minVal + (i * (maxVal - minVal)) / 5));
+    // Create clean logarithmic tick values
+    function generateLogTicks(min, max) {
+      const logMin = Math.log10(min);
+      const logMax = Math.log10(max);
+      const logStep = (logMax - logMin) / 4; // 5 ticks total
+      
+      const ticks = [];
+      for (let i = 0; i <= 4; i++) {
+        const logValue = logMin + (i * logStep);
+        let tickValue = Math.pow(10, logValue);
+        
+        // Round to nice numbers
+        if (tickValue < 10) {
+          tickValue = Math.round(tickValue);
+        } else if (tickValue < 100) {
+          tickValue = Math.round(tickValue / 5) * 5;
+        } else if (tickValue < 1000) {
+          tickValue = Math.round(tickValue / 10) * 10;
+        } else {
+          tickValue = Math.round(tickValue / 100) * 100;
+        }
+        
+        ticks.push(tickValue);
+      }
+      
+      // Ensure we include actual min and max
+      ticks[0] = min;
+      ticks[ticks.length - 1] = max;
+      
+      return [...new Set(ticks)].sort((a, b) => a - b);
+    }
+
+    const tickValues = generateLogTicks(minVal, maxVal);
 
     const xAxis = d3
       .axisBottom(xScale)
