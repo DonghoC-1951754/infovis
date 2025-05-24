@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import CountriesRankingTable from "./CountriesRankingTable.js";
 
-const CountriesFilter = ({ onDateChange }) => {
+const CountriesFilter = ({
+  onDateChange,
+  selectedCountry,
+  onCountrySelect,
+}) => {
   const [startDate, setFromDate] = useState("2024-01-01");
   const [endDate, setToDate] = useState("2025-04-17");
   const [data, setData] = useState(null);
@@ -66,8 +70,13 @@ const CountriesFilter = ({ onDateChange }) => {
           <option>Option 2</option>
         </select>
       </div>
-      <CountriesRankingTable data={data} />
+      <CountriesRankingTable
+        data={data}
+        selectedCountry={selectedCountry}
+        onCountrySelect={onCountrySelect}
+      />
     </aside>
   );
 };
+
 export default CountriesFilter;

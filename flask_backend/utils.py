@@ -139,4 +139,69 @@ def get_cluster_data():
         traceback.print_exc()
         return jsonify({"error": f"Error reading clustering data: {str(e)}"}), 500
 
+def get_aircraft_specs():
+    df = pd.read_csv('../planecrash_data/accidents_with_specs.csv')
+    df['Similarity_Score'] = pd.to_numeric(df['Similarity_Score'], errors='coerce')
+    filtered_df = df[df['Similarity_Score'] >= 75]
+
+    # print(f"Number of records with Similarity_Score >= 75: {len(filtered_df)}")
+
+    columns_to_keep = [
+        'ICAO_Code', 'FAA_Designator', 'Manufacturer', 'Model_FAA', 'Model_BADA',
+        'Physical_Class_Engine', 'Num_Engines', 'AAC', 'AAC_minimum', 'AAC_maximum',
+        'ADG', 'TDG', 'Approach_Speed_knot', 'Approach_Speed_minimum_knot',
+        'Approach_Speed_maximum_knot', 'Wingspan_ft_without_winglets_sharklets',
+        'Wingspan_ft_with_winglets_sharklets', 'Length_ft', 'Tail_Height_at_OEW_ft',
+        'Wheelbase_ft', 'Cockpit_to_Main_Gear_ft', 'Main_Gear_Width_ft', 'MTOW_lb',
+        'MALW_lb', 'Main_Gear_Config', 'ICAO_WTC', 'Parking_Area_ft2', 'Class',
+        'FAA_Weight', 'CWT', 'One_Half_Wake_Category', 'Two_Wake_Category_Appx_A',
+        'Two_Wake_Category_Appx_B', 'Rotor_Diameter_ft', 'SRS', 'LAHSO', 'FAA_Registry',
+        'Registration_Count', 'TMFS_Operations_FY24', 'Remarks', 'LastUpdate',
+        'Matched_Model_BADA', 'Similarity_Score'
+    ]
+
+    filtered_df = filtered_df.reindex(columns=columns_to_keep)
+    return filtered_df.to_json(orient='records', force_ascii=False)
+
+def get_accident_rate_per_engine_amount():
+    df = pd.read_csv('../planecrash_data/accidents_with_specs.csv')
+    df['Similarity_Score'] = pd.to_numeric(df['Similarity_Score'], errors='coerce')
+    filtered_df = df[df['Similarity_Score'] >= 75]
+
+    amount = filtered_df['Num_Engines'].value_counts()
+
+    amount_json = json.dumps(amount.to_dict(), indent=2)
+
+    return amount_json
+
+def get_accident_rate_per_weight_class():
+    df = pd.read_csv('../planecrash_data/accidents_with_specs.csv')
+    df['Similarity_Score'] = pd.to_numeric(df['Similarity_Score'], errors='coerce')
+    filtered_df = df[df['Similarity_Score'] >= 75]
+
+    weights = filtered_df['MTOW_lb'].dropna()
+
+    # Define weight classes based on your criteria
+    def classify_weight(w):
+        if w > 255000:
+            return "Heavy"
+        elif w > 41000:
+            return "Large"
+        elif w > 12500:
+            return "Medium"
+        else:
+            return "Small"
+
+    # Classify each weight
+    weight_classes = weights.apply(classify_weight)
+
+    # Count the number of occurrences in each class
+    counts = weight_classes.value_counts().to_dict()
+
+    # Make sure all classes appear in the output, even if count is zero
+    all_classes = ["Small", "Medium", "Large", "Heavy"]
+    result = {cls: counts.get(cls, 0) for cls in all_classes}
+
+    return json.dumps(result, indent=2)
+
 

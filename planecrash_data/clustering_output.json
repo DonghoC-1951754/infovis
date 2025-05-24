@@ -1,1 +1,86 @@
-{"kmeans": {"clusters": [{"id": 0, "interpretation": "Shot down/Military action", "size": 234}, {"id": 1, "interpretation": "Weather-related", "size": 343}, {"id": 2, "interpretation": "Weather-related", "size": 178}, {"id": 3, "interpretation": "Control loss", "size": 139}, {"id": 4, "interpretation": "Weather-related", "size": 207}, {"id": 5, "interpretation": "Weather-related", "size": 110}, {"id": 6, "interpretation": "Shot down/Military action", "size": 124}, {"id": 7, "interpretation": "Explosion/Fire", "size": 659}, {"id": 8, "interpretation": "Unclear cause", "size": 45}, {"id": 9, "interpretation": "Weather-related", "size": 195}, {"id": 10, "interpretation": "Mechanical failure", "size": 135}, {"id": 11, "interpretation": "Weather-related", "size": 203}, {"id": 12, "interpretation": "Unclear cause", "size": 123}, {"id": 13, "interpretation": "Weather-related", "size": 41}, {"id": 14, "interpretation": "Shot down/Military action", "size": 70}, {"id": 15, "interpretation": "Pilot error", "size": 20}, {"id": 16, "interpretation": "Control loss", "size": 194}, {"id": 17, "interpretation": "Weather-related", "size": 81}, {"id": 18, "interpretation": "Weather-related", "size": 22}, {"id": 19, "interpretation": "Control loss", "size": 174}, {"id": 20, "interpretation": "Weather-related", "size": 21}, {"id": 21, "interpretation": "Control loss", "size": 103}, {"id": 22, "interpretation": "Mechanical failure", "size": 241}, {"id": 23, "interpretation": "Weather-related", "size": 167}, {"id": 24, "interpretation": "Weather-related", "size": 246}, {"id": 25, "interpretation": "Shot down/Military action", "size": 134}, {"id": 26, "interpretation": "Shot down/Military action", "size": 298}, {"id": 27, "interpretation": "Control loss", "size": 81}, {"id": 28, "interpretation": "Pilot error", "size": 35}, {"id": 29, "interpretation": "Test/Demonstration flight", "size": 104}]}}
+{
+  "kmeans": {
+    "clusters": [
+      {
+        "id": 0,
+        "interpretation": "Cargo mishandling",
+        "size": 80
+      },
+      {
+        "id": 1,
+        "interpretation": "Combustible gas failure",
+        "size": 11
+      },
+      {
+        "id": 2,
+        "interpretation": "Control loss",
+        "size": 475
+      },
+      {
+        "id": 3,
+        "interpretation": "Explosion/Fire",
+        "size": 224
+      },
+      {
+        "id": 4,
+        "interpretation": "Fuel-related",
+        "size": 86
+      },
+      {
+        "id": 5,
+        "interpretation": "Infrastructure collision",
+        "size": 27
+      },
+      {
+        "id": 6,
+        "interpretation": "Mechanical failure",
+        "size": 622
+      },
+      {
+        "id": 7,
+        "interpretation": "Pilot error",
+        "size": 548
+      },
+      {
+        "id": 8,
+        "interpretation": "Shot down/Military action",
+        "size": 667
+      },
+      {
+        "id": 9,
+        "interpretation": "Terrain collision",
+        "size": 277
+      },
+      {
+        "id": 10,
+        "interpretation": "Terrorism",
+        "size": 69
+      },
+      {
+        "id": 11,
+        "interpretation": "Test/Demonstration flight",
+        "size": 29
+      },
+      {
+        "id": 12,
+        "interpretation": "Weather-related",
+        "size": 1613
+      }
+    ],
+    "distribution": {
+      "Cargo mishandling": 80,
+      "Combustible gas failure": 11,
+      "Control loss": 475,
+      "Explosion/Fire": 224,
+      "Fuel-related": 86,
+      "Infrastructure collision": 27,
+      "Mechanical failure": 622,
+      "Pilot error": 548,
+      "Shot down/Military action": 667,
+      "Terrain collision": 277,
+      "Terrorism": 69,
+      "Test/Demonstration flight": 29,
+      "Weather-related": 1613
+    }
+  }
+}

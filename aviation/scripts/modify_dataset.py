@@ -1,4 +1,5 @@
 import pandas as pd
+from fuzzywuzzy import process
 
 def add_operator_country(main_csv):
     prefix_df = pd.read_csv("./planecrash_data/registration_prefixes.csv")
@@ -64,11 +65,57 @@ def add_aircraft_manufacturer(main_csv):
     accidents_df.to_csv("./planecrash_data/planecrash_dataset_with_manufacturers.csv", index=False)
     print("Done! Final data saved to 'accidents_with_manufacturers.csv'")
 
+def normalize(text):
+    if pd.isna(text):
+        return ""
+    return str(text).lower().replace("-", "").replace(" ", "")
+
+def add_aircraft_specs(accidents_df):
+    # Load and clean Excel data
+    aircraft_df = pd.read_excel("./planecrash_data/aircraft_specs.xlsx", engine="openpyxl")
+
+    aircraft_df.dropna(axis=1, how='all', inplace=True)
+
+    aircraft_df = aircraft_df.loc[:, ~aircraft_df.columns.str.contains("^Unnamed")]
+
+    aircraft_df["Normalized_Model_BADA"] = aircraft_df["Model_BADA"].apply(normalize)
+    model_list = aircraft_df["Normalized_Model_BADA"].tolist()
+    model_lookup = dict(zip(aircraft_df["Normalized_Model_BADA"], aircraft_df["Model_BADA"]))
+
+    matched_rows = []
+
+    for idx, row in accidents_df.iterrows():
+        print(idx)
+        ac_type = row["AC Type"]
+        normalized_ac = normalize(ac_type)
+
+        best_match_norm, score = process.extractOne(normalized_ac, model_list)
+        matched_row = aircraft_df[aircraft_df["Normalized_Model_BADA"] == best_match_norm]
+
+        if not matched_row.empty:
+            spec_data = matched_row.iloc[0].drop("Normalized_Model_BADA").to_dict()
+        else:
+            spec_data = {col: None for col in aircraft_df.columns if col != "Normalized_Model_BADA"}
+
+        spec_data["Matched_Model_BADA"] = model_lookup.get(best_match_norm, None)
+        spec_data["Similarity_Score"] = score
+
+        matched_rows.append(spec_data)
+
+    matched_df = pd.DataFrame(matched_rows)
+    final_df = pd.concat([accidents_df.reset_index(drop=True), matched_df.reset_index(drop=True)], axis=1)
+
+    final_df = final_df.loc[:, ~final_df.columns.str.contains("^Unnamed")]
+
+    final_df.to_csv("./planecrash_data/accidents_with_specs.csv", index=False, encoding="utf-8")
+    print("Done! Clean output saved to 'accidents_with_specs.csv'")
+
+
 def main():
     main_csv = pd.read_csv("./planecrash_data/planecrash_dataset.csv")
 
     # add_operator_country(main_csv)
-    add_aircraft_manufacturer(main_csv)
+    add_aircraft_specs(main_csv)
     
     return
 

@@ -78,22 +78,7 @@ const Countries = () => {
           const count = country ? country.Count : 0;
           return getColor(count);
         })
-        .attr("stroke", (d) => {
-          const countryName = d.properties.name;
-          const countryNameLong = d.properties.name_long;
-
-          const country = data.find(
-            (item) =>
-              item["Operator Country"].toLowerCase() ===
-                countryName.toLowerCase() ||
-              item["Operator Country"].toLowerCase() ===
-                countryNameLong.toLowerCase()
-          );
-
-          const isSelected =
-            country && selectedCountry === country["Operator Country"];
-          return isSelected ? "#ff6b35" : "#FFFFFF";
-        })
+        .attr("stroke", "#565758") // All borders are black by default
         .attr("stroke-width", (d) => {
           const countryName = d.properties.name;
           const countryNameLong = d.properties.name_long;
@@ -108,7 +93,7 @@ const Countries = () => {
 
           const isSelected =
             country && selectedCountry === country["Operator Country"];
-          return isSelected ? 3 : 0.5;
+          return isSelected ? 3 : 0.2;
         })
         .style("cursor", "pointer")
         .on("click", function (event, d) {
@@ -144,7 +129,9 @@ const Countries = () => {
           );
 
           if (country) {
-            d3.select(this).attr("stroke-width", 2).attr("stroke", "#333");
+            d3.select(this)
+              .attr("stroke", "#139be8") // Blue hover color
+              .attr("stroke-width", 1.5); // Thicker on hover
           }
         })
         .on("mouseout", function (event, d) {
@@ -163,8 +150,8 @@ const Countries = () => {
             country && selectedCountry === country["Operator Country"];
 
           d3.select(this)
-            .attr("stroke", isSelected ? "#ff6b35" : "#FFFFFF")
-            .attr("stroke-width", isSelected ? 3 : 0.5);
+            .attr("stroke", "#565758")
+            .attr("stroke-width", isSelected ? 3 : 0.2); // Reset to original
         });
     });
 
