@@ -49,10 +49,10 @@ const CountriesRankingTable = ({ data, selectedCountry, onCountrySelect }) => {
   const sortedData = [...data].sort((a, b) => b.Count - a.Count);
 
   return (
-    <div className="mt-4">
+    <div className="mt-8">
       <h3 className="text-md font-semibold mb-2">Country Rankings</h3>
       <div
-        className="max-h-96 overflow-y-auto border border-gray-300 rounded"
+        className="max-h-[38rem] overflow-y-auto border border-gray-300 rounded"
         ref={tableContainerRef}
       >
         <table className="w-full text-sm">

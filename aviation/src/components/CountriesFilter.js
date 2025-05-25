@@ -41,7 +41,7 @@ const CountriesFilter = ({
   return (
     <aside className="w-90 bg-gray-100 p-4 border-l border-gray-300">
       <h2 className="text-lg font-semibold mb-4">
-        Number of accidents by the operator's country of origin
+        Number of Accidents by Operator's Country of Origin
       </h2>
       <div className="mb-2 max-w-80">
         <label className="block mb-1">Date</label>

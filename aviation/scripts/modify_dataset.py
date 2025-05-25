@@ -110,7 +110,6 @@ def add_aircraft_specs(accidents_df):
     final_df.to_csv("./planecrash_data/accidents_with_specs.csv", index=False, encoding="utf-8")
     print("Done! Clean output saved to 'accidents_with_specs.csv'")
 
-
 def main():
     main_csv = pd.read_csv("./planecrash_data/planecrash_dataset.csv")
 

@@ -3,6 +3,8 @@ import csv
 import json
 import os
 import sys
+import numpy as np
+import math
 from flask import request, jsonify
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from aviation.scripts.summary_clustering import clustering_main
@@ -213,3 +215,32 @@ def get_accident_rate_per_weight_class():
     return json.dumps(result, indent=2)
 
 
+def get_accident_rate_per_wingspan_bin():
+    df = pd.read_csv("../planecrash_data/accidents_with_specs.csv")
+    df['Similarity_Score'] = pd.to_numeric(df['Similarity_Score'], errors='coerce')
+    filtered_df = df[df['Similarity_Score'] >= 75]
+
+    wingspans = filtered_df["Wingspan_ft_without_winglets_sharklets"].fillna(
+        filtered_df["Wingspan_ft_with_winglets_sharklets"]
+    ).dropna().astype(float)
+
+    bin_width = 10
+
+    data_min = math.floor(wingspans.min() / bin_width) * bin_width
+    data_max = math.ceil(wingspans.max() / bin_width) * bin_width
+
+    bins = np.arange(data_min, data_max + bin_width, bin_width)
+
+    bin_counts, bin_edges = np.histogram(wingspans, bins=bins)
+
+    histogram_json = [
+        {
+            "bin_start": int(bin_edges[i]),
+            "bin_end": int(bin_edges[i + 1]),
+            "accident_count": int(bin_counts[i])
+        }
+        for i in range(len(bin_counts))
+    ]
+
+    json_output = json.dumps(histogram_json, indent=2)
+    return json_output
