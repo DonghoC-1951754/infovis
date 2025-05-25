@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import * as d3 from "d3";
 
-const WingspanHistogram = ({ data }) => {
+const LengthHistogram = ({ data }) => {
   const svgRef = useRef();
   const containerRef = useRef();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -178,7 +178,7 @@ const WingspanHistogram = ({ data }) => {
       .attr("y", height - 20)
       .attr("fill", "black")
       .attr("font-weight", "bold")
-      .text("Aircraft Wingspan (ft)");
+      .text("Aircraft Length (ft)");
 
     svg
       .append("text")
@@ -199,7 +199,7 @@ const WingspanHistogram = ({ data }) => {
       .attr("font-size", "18px")
       .attr("font-weight", "bold")
       .attr("fill", "#1f2937")
-      .text("Amount of Accidents by Wingspan");
+      .text("Amount of Accidents by Length");
   }, [data, dimensions]);
 
   // Calculate total accidents
@@ -227,4 +227,4 @@ const WingspanHistogram = ({ data }) => {
   );
 };
 
-export default WingspanHistogram;
+export default LengthHistogram;

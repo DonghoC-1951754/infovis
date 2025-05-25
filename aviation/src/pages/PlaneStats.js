@@ -4,12 +4,14 @@ import EngineBarChart from "../components/EngineBarChart";
 import WeightBarChart from "../components/WeightBarChart";
 import WingspanHistogram from "../components/WingspanHistogram";
 import AboardBoxPlot from "../components/AboardBoxPlot";
+import LengthHistogram from "../components/LengthHistogram"; // ✅ New import
 
 const PlaneStats = () => {
   const [engineData, setEngineData] = useState(null);
   const [weightData, setWeightData] = useState(null);
   const [wingspanData, setWingspanData] = useState(null);
   const [passengerCrewData, setPassengerCrewData] = useState(null);
+  const [lengthData, setLengthData] = useState(null); // ✅ New state
 
   const [showChart, setShowChart] = useState(false);
   const [chartType, setChartType] = useState(null);
@@ -36,6 +38,11 @@ const PlaneStats = () => {
       .catch((err) =>
         console.error("Error fetching passenger/crew data:", err)
       );
+
+    fetch("http://localhost:5000/get_accident_rate_length_bin")
+      .then((res) => res.json())
+      .then((data) => setLengthData(data))
+      .catch((err) => console.error("Error fetching length data:", err));
   }, []);
 
   const handleEngineClick = () => {
@@ -74,6 +81,15 @@ const PlaneStats = () => {
     }
   };
 
+  const handleLengthClick = () => {
+    if (lengthData) {
+      setChartType("length");
+      setShowChart(true);
+    } else {
+      alert("Length data not loaded yet.");
+    }
+  };
+
   return (
     <div className="h-screen flex">
       <SidePanel />
@@ -97,10 +113,9 @@ const PlaneStats = () => {
                 <button
                   onClick={handleEngineClick}
                   className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer hover:bg-blue-600 transition-colors"
-                  aria-label="Engine part clickable area"
                   title="Click to see engine stats"
                 />
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
                   Engine
                 </div>
               </div>
@@ -109,10 +124,9 @@ const PlaneStats = () => {
                 <button
                   onClick={handleWeightClick}
                   className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer hover:bg-blue-600 transition-colors"
-                  aria-label="Weight part clickable area"
                   title="Click to see weight stats"
                 />
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
                   Weight
                 </div>
               </div>
@@ -121,10 +135,9 @@ const PlaneStats = () => {
                 <button
                   onClick={handleWingspanClick}
                   className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer hover:bg-blue-600 transition-colors"
-                  aria-label="Wingspan part clickable area"
                   title="Click to see wingspan stats"
                 />
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
                   Wingspan
                 </div>
               </div>
@@ -133,11 +146,21 @@ const PlaneStats = () => {
                 <button
                   onClick={handlePassengerCrewClick}
                   className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer hover:bg-blue-600 transition-colors"
-                  aria-label="Passenger/Crew clickable area"
                   title="Click to see passenger/crew stats"
                 />
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
                   Aboard
+                </div>
+              </div>
+
+              <div className="absolute top-[12.0%] left-[48.9%] group">
+                <button
+                  onClick={handleLengthClick}
+                  className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer hover:bg-blue-600 transition-colors"
+                  title="Click to see length stats"
+                />
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Length
                 </div>
               </div>
             </div>
@@ -153,6 +176,8 @@ const PlaneStats = () => {
                   <WingspanHistogram data={wingspanData} />
                 ) : chartType === "aboard" && passengerCrewData ? (
                   <AboardBoxPlot data={passengerCrewData} />
+                ) : chartType === "length" && lengthData ? (
+                  <LengthHistogram data={lengthData} />
                 ) : (
                   <div className="text-center flex items-center justify-center h-full">
                     <p className="text-gray-600 text-lg">Loading chart...</p>
