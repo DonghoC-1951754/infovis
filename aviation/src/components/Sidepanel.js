@@ -9,7 +9,7 @@ const SidePanel = () => {
     <div>
       <aside
         id="default-sidebar"
-        className="w-60 h-screen"
+        className="w-60 sticky top-0 h-screen"
         aria-label="Sidebar"
       >
         <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
