@@ -207,11 +207,11 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
       .attr("width", x.bandwidth())
       .attr("y", height) // Start from bottom for animation
       .attr("height", 0) // Start with height 0 for animation
-      .attr("fill", "#3b82f6")
+      .attr("fill", "#db291d")
       .attr("opacity", 0.8)
       .on("mouseover", function (event, d) {
         // Highlight bar
-        d3.select(this).attr("opacity", 1).attr("fill", "#2563eb");
+        d3.select(this).attr("opacity", 1).attr("fill", "#941b13");
 
         // Calculate position relative to chart container
         const chartRect = chartRef.current.getBoundingClientRect();
@@ -227,7 +227,7 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
       })
       .on("mouseout", function () {
         // Restore bar
-        d3.select(this).attr("opacity", 0.8).attr("fill", "#3b82f6");
+        d3.select(this).attr("opacity", 0.8).attr("fill", "#db291d");
 
         // Hide tooltip
         tooltipRef.current.style("opacity", 0);

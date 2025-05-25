@@ -106,10 +106,10 @@ const WeightBarChart = ({ data }) => {
       .attr("y", y(0)) // start from bottom
       .attr("width", x.bandwidth())
       .attr("height", 0) // start with height 0
-      .attr("fill", "#3b82f6")
+      .attr("fill", "#db291d")
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {
-        d3.select(this).attr("fill", "#1d4ed8");
+        d3.select(this).attr("fill", "#941b13");
 
         const percentage = ((d.count / total) * 100).toFixed(1);
 
@@ -125,7 +125,7 @@ const WeightBarChart = ({ data }) => {
           .style("left", event.clientX + 10 + "px");
       })
       .on("mouseout", function () {
-        d3.select(this).attr("fill", "#3b82f6");
+        d3.select(this).attr("fill", "#db291d");
         tooltip.style("visibility", "hidden");
       })
       .transition()

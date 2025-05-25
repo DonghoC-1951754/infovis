@@ -131,10 +131,10 @@ const EngineBarChart = ({ data }) => {
       .attr("width", x.bandwidth())
       .attr("y", y(0)) // start at y(0) (bottom of chart)
       .attr("height", 0) // initial height 0
-      .attr("fill", "#3b82f6")
+      .attr("fill", "#db291d")
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {
-        d3.select(this).attr("fill", "#1d4ed8");
+        d3.select(this).attr("fill", "#941b13");
 
         const percentage = ((d.accident_rate / total) * 100).toFixed(1);
 
@@ -150,7 +150,7 @@ const EngineBarChart = ({ data }) => {
           .style("left", event.clientX + 10 + "px");
       })
       .on("mouseout", function () {
-        d3.select(this).attr("fill", "#3b82f6");
+        d3.select(this).attr("fill", "#db291d");
         tooltip.style("visibility", "hidden");
       })
       .transition()

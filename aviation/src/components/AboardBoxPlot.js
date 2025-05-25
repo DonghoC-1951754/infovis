@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import * as d3 from "d3";
 
-const SingleBoxPlot = ({ data, category, dimensions }) => {
+const SingleBoxPlot = ({ data, category, dimensions, title }) => {
   const svgRef = useRef();
 
   useEffect(() => {
@@ -11,11 +11,22 @@ const SingleBoxPlot = ({ data, category, dimensions }) => {
     svg.selectAll("*").remove();
     d3.selectAll(`.tooltip-${category}`).remove();
 
-    const margin = { top: 40, right: 30, bottom: 60, left: 50 };
+    const margin = { top: 60, right: 30, bottom: 60, left: 50 };
     const width = dimensions.width;
     const height = dimensions.height;
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
+
+    // Add title
+    svg
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", 25)
+      .attr("text-anchor", "middle")
+      .style("font-size", "16px")
+      .style("font-weight", "600")
+      .style("fill", "#374151")
+      .text(title);
 
     const weightClasses = ["Small", "Medium", "Large", "Heavy"];
     const transformedData = [];
@@ -183,7 +194,7 @@ const SingleBoxPlot = ({ data, category, dimensions }) => {
       .append("g")
       .attr("transform", `translate(${margin.left},0)`)
       .call(d3.axisLeft(y));
-  }, [data, dimensions, category]);
+  }, [data, dimensions, category, title]);
 
   return (
     <svg
@@ -259,11 +270,13 @@ const AboardBoxPlot = ({ data }) => {
           data={data?.crew || demoData.crew}
           category="crew"
           dimensions={dimensions}
+          title="Crew Aboard"
         />
         <SingleBoxPlot
           data={data?.passengers || demoData.passengers}
           category="passengers"
           dimensions={dimensions}
+          title="Passengers Aboard"
         />
       </div>
 
