@@ -95,7 +95,7 @@ const SidePanel = () => {
             </li>
             <li>
               <a
-                href="/info"
+                href="/about"
                 className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
                 <svg
@@ -107,7 +107,7 @@ const SidePanel = () => {
                 >
                   <path d="M10 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm.75-5.5V5a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0Z" />
                 </svg>
-                <span className="flex-1 ms-3 whitespace-nowrap">Info</span>
+                <span className="flex-1 ms-3 whitespace-nowrap">About</span>
               </a>
             </li>
           </ul>

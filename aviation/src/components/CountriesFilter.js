@@ -40,7 +40,9 @@ const CountriesFilter = ({
 
   return (
     <aside className="w-90 bg-gray-100 p-4 border-l border-gray-300">
-      <h2 className="text-lg font-semibold mb-4">Filters</h2>
+      <h2 className="text-lg font-semibold mb-4">
+        Number of accidents by the operator's country of origin
+      </h2>
       <div className="mb-2 max-w-80">
         <label className="block mb-1">Date</label>
         <div className="flex items-center">
@@ -60,15 +62,6 @@ const CountriesFilter = ({
             onChange={handleDateChange}
           />
         </div>
-      </div>
-      <div className="max-w-80">
-        <label className="block mb-1">Dropdown</label>
-        <select className="w-full mb-3 p-2 border rounded">
-          <option>
-            Number of accidents by the operator's country of origin
-          </option>
-          <option>Option 2</option>
-        </select>
       </div>
       <CountriesRankingTable
         data={data}

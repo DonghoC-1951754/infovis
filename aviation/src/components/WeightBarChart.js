@@ -53,10 +53,7 @@ const WeightBarChart = ({ data }) => {
       return;
 
     const transformedData = Object.entries(data).map(
-      ([weightClass, count]) => ({
-        weightClass,
-        count,
-      })
+      ([weightClass, count]) => ({ weightClass, count })
     );
 
     const svg = d3.select(svgRef.current);
@@ -65,37 +62,23 @@ const WeightBarChart = ({ data }) => {
 
     const width = dimensions.width;
     const height = dimensions.height;
-    const margin = { top: 60, right: 30, bottom: 60, left: 120 };
+    const margin = { top: 60, right: 30, bottom: 60, left: 60 };
 
-    const chartWidth = Math.max(width - margin.left - margin.right, 100);
-    const chartHeight = Math.max(height - margin.top - margin.bottom, 100);
-
-    // Scales
-    const y = d3
-      .scaleBand()
-      .domain(transformedData.map((d) => d.weightClass))
-      .range([margin.top, margin.top + chartHeight])
-      .padding(0.1);
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
 
     const x = d3
+      .scaleBand()
+      .domain(transformedData.map((d) => d.weightClass))
+      .range([margin.left, margin.left + chartWidth])
+      .padding(0.2);
+
+    const y = d3
       .scaleLinear()
       .domain([0, d3.max(transformedData, (d) => d.count)])
       .nice()
-      .range([margin.left, margin.left + chartWidth]);
+      .range([margin.top + chartHeight, margin.top]);
 
-    // Axes
-    const yAxis = (g) =>
-      g
-        .attr("transform", `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y).tickSizeOuter(0));
-
-    const xAxis = (g) =>
-      g
-        .attr("transform", `translate(0,${margin.top + chartHeight})`)
-        .call(d3.axisBottom(x).ticks(5))
-        .call((g) => g.select(".domain").remove());
-
-    // Tooltip
     const tooltip = d3
       .select("body")
       .selectAll(".tooltip")
@@ -110,22 +93,19 @@ const WeightBarChart = ({ data }) => {
       .style("border-radius", "4px")
       .style("font-size", "12px")
       .style("pointer-events", "none")
-      .style("z-index", "1000")
-      .style("max-width", "200px")
-      .style("white-space", "nowrap");
+      .style("z-index", "1000");
 
     const total = d3.sum(transformedData, (d) => d.count);
 
-    // Bars with animation
     svg
       .append("g")
       .selectAll("rect")
       .data(transformedData)
       .join("rect")
-      .attr("y", (d) => y(d.weightClass))
-      .attr("x", margin.left)
-      .attr("height", y.bandwidth())
-      .attr("width", 0) // start width 0 for animation
+      .attr("x", (d) => x(d.weightClass))
+      .attr("y", y(0)) // start from bottom
+      .attr("width", x.bandwidth())
+      .attr("height", 0) // start with height 0
       .attr("fill", "#3b82f6")
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {
@@ -134,10 +114,10 @@ const WeightBarChart = ({ data }) => {
         const percentage = ((d.count / total) * 100).toFixed(1);
 
         tooltip.style("visibility", "visible").html(`
-            <div><strong>Weight Class:</strong> ${d.weightClass}</div>
-            <div><strong>Amount:</strong> ${d.count}</div>
-            <div><strong>Percentage:</strong> ${percentage}%</div>
-          `);
+          <div><strong>Weight Class:</strong> ${d.weightClass}</div>
+          <div><strong>Amount:</strong> ${d.count}</div>
+          <div><strong>Percentage:</strong> ${percentage}%</div>
+        `);
       })
       .on("mousemove", function (event) {
         tooltip
@@ -148,33 +128,38 @@ const WeightBarChart = ({ data }) => {
         d3.select(this).attr("fill", "#3b82f6");
         tooltip.style("visibility", "hidden");
       })
-      .transition() // animate to final width
+      .transition()
       .duration(800)
-      .attr("width", (d) => x(d.count) - margin.left)
+      .attr("y", (d) => y(d.count))
+      .attr("height", (d) => y(0) - y(d.count))
       .delay((_, i) => i * 100);
 
-    svg.append("g").call(yAxis);
+    svg
+      .append("g")
+      .attr("transform", `translate(0,${margin.top + chartHeight})`)
+      .call(d3.axisBottom(x));
+
+    svg
+      .append("g")
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y));
+
+    svg
+      .append("text")
+      .attr("text-anchor", "middle")
+      .attr("x", width / 2)
+      .attr("y", height - 10)
+      .attr("fill", "black")
+      .attr("font-weight", "bold")
+      .text("Weight Class");
 
     svg
       .append("text")
       .attr("text-anchor", "middle")
       .attr(
         "transform",
-        `translate(${margin.left / 2}, ${
-          margin.top + chartHeight / 2
-        }) rotate(-90)`
+        `translate(${margin.left / 2}, ${height / 2}) rotate(-90)`
       )
-      .attr("fill", "black")
-      .attr("font-weight", "bold")
-      .text("Weight Class");
-
-    svg.append("g").call(xAxis);
-
-    svg
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("x", margin.left + chartWidth / 2)
-      .attr("y", height - 20)
       .attr("fill", "black")
       .attr("font-weight", "bold")
       .text("Amount of Accidents");

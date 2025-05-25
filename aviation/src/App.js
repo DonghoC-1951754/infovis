@@ -5,7 +5,7 @@ import Home from "./pages/AccidentClassifications";
 import Countries from "./pages/Countries";
 import Manufacturers from "./pages/Manufacturers";
 import PlaneStats from "./pages/PlaneStats";
-import Info from "./pages/Info";
+import About from "./pages/About";
 
 function App() {
   return (
@@ -15,7 +15,7 @@ function App() {
         <Route path="/countries" element={<Countries />} />
         <Route path="/manufacturers" element={<Manufacturers />} />
         <Route path="/planestats" element={<PlaneStats />} />
-        <Route path="/info" element={<Info />} />
+        <Route path="/about" element={<About />} />
       </Routes>
     </Router>
   );

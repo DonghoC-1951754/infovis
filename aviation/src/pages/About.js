@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import SidePanel from "../components/Sidepanel";
 import * as d3 from "d3";
 
-const Info = () => {
+const About = () => {
   return (
     <div className="h-screen flex">
       <SidePanel />
@@ -10,4 +10,4 @@ const Info = () => {
   );
 };
 
-export default Info;
+export default About;
