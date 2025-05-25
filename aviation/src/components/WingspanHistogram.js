@@ -178,7 +178,7 @@ const WingspanHistogram = ({ data }) => {
       .attr("y", height - 20)
       .attr("fill", "black")
       .attr("font-weight", "bold")
-      .text("Wingspan Bin");
+      .text("Wingspan Bin (ft)");
 
     svg
       .append("text")
@@ -199,7 +199,7 @@ const WingspanHistogram = ({ data }) => {
       .attr("font-size", "18px")
       .attr("font-weight", "bold")
       .attr("fill", "#1f2937")
-      .text("Accident Rate by Wingspan Bins");
+      .text("Amount of Accidents by Wingspan Range");
   }, [data, dimensions]);
 
   // Calculate total accidents
