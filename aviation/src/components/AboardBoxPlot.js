@@ -1,101 +1,54 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import * as d3 from "d3";
 
-const AboardBoxPlot = ({ data }) => {
+const SingleBoxPlot = ({ data, category, dimensions }) => {
   const svgRef = useRef();
-  const containerRef = useRef();
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-
-  const updateDimensions = useCallback(() => {
-    if (containerRef.current) {
-      const { width, height } = containerRef.current.getBoundingClientRect();
-      const adjustedHeight = Math.max(height - 40, 400);
-      setDimensions({
-        width: Math.max(width, 600),
-        height: adjustedHeight,
-      });
-    }
-  }, []);
 
   useEffect(() => {
-    updateDimensions();
-    const resizeObserver = new ResizeObserver(() => updateDimensions());
-
-    if (containerRef.current) resizeObserver.observe(containerRef.current);
-    const handleResize = () => setTimeout(updateDimensions, 100);
-
-    window.addEventListener("resize", handleResize);
-    d3.selectAll(".tooltip").remove();
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", handleResize);
-      d3.selectAll(".tooltip").remove();
-    };
-  }, [updateDimensions]);
-
-  useEffect(() => {
-    if (
-      !data ||
-      typeof data !== "object" ||
-      dimensions.width === 0 ||
-      dimensions.height === 0
-    )
-      return;
-
-    const transformedData = [];
-
-    Object.entries(data).forEach(([category, weightClasses]) => {
-      Object.entries(weightClasses).forEach(([weightClass, values]) => {
-        if (Array.isArray(values) && values.length > 0) {
-          const sortedValues = [...values].sort((a, b) => a - b);
-          const q1 = d3.quantile(sortedValues, 0.25);
-          const median = d3.quantile(sortedValues, 0.5);
-          const q3 = d3.quantile(sortedValues, 0.75);
-          const iqr = q3 - q1;
-          const min = Math.max(d3.min(sortedValues), q1 - 1.5 * iqr);
-          const max = Math.min(d3.max(sortedValues), q3 + 1.5 * iqr);
-          const outliers = sortedValues.filter((d) => d < min || d > max);
-
-          transformedData.push({
-            category,
-            weightClass,
-            values: sortedValues,
-            q1,
-            median,
-            q3,
-            min,
-            max,
-            outliers,
-            count: values.length,
-          });
-        }
-      });
-    });
+    if (!data || !dimensions.width || !dimensions.height) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
-    d3.selectAll(".tooltip").remove();
+    d3.selectAll(`.tooltip-${category}`).remove();
 
+    const margin = { top: 40, right: 30, bottom: 60, left: 50 };
     const width = dimensions.width;
     const height = dimensions.height;
-    const margin = { top: 60, right: 30, bottom: 80, left: 60 };
-
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
-    const categories = ["crew", "passengers"];
     const weightClasses = ["Small", "Medium", "Large", "Heavy"];
-    const xLabels = [];
-    categories.forEach((category) => {
-      weightClasses.forEach((weightClass) => {
-        xLabels.push(`${category}-${weightClass}`);
-      });
+    const transformedData = [];
+
+    weightClasses.forEach((weightClass) => {
+      const values = data[weightClass] || [];
+      if (Array.isArray(values) && values.length > 0) {
+        const sorted = [...values].sort((a, b) => a - b);
+        const q1 = d3.quantile(sorted, 0.25);
+        const median = d3.quantile(sorted, 0.5);
+        const q3 = d3.quantile(sorted, 0.75);
+        const iqr = q3 - q1;
+        const min = Math.max(d3.min(sorted), q1 - 1.5 * iqr);
+        const max = Math.min(d3.max(sorted), q3 + 1.5 * iqr);
+        const outliers = sorted.filter((v) => v < min || v > max);
+
+        transformedData.push({
+          weightClass,
+          values: sorted,
+          q1,
+          median,
+          q3,
+          min,
+          max,
+          outliers,
+          count: values.length,
+        });
+      }
     });
 
     const x = d3
       .scaleBand()
-      .domain(xLabels)
+      .domain(weightClasses)
       .range([margin.left, margin.left + chartWidth])
       .padding(0.1);
 
@@ -106,96 +59,31 @@ const AboardBoxPlot = ({ data }) => {
       .nice()
       .range([margin.top + chartHeight, margin.top]);
 
-    const colorScale = d3
-      .scaleOrdinal()
-      .domain(categories)
-      .range(["#3b82f6", "#22c55e"]);
-
-    const tooltip = d3
-      .select("body")
-      .selectAll(".tooltip")
-      .data([0])
-      .join("div")
-      .attr("class", "tooltip")
-      .style("position", "fixed")
-      .style("visibility", "hidden")
-      .style("background-color", "rgba(0, 0, 0, 0.8)")
-      .style("color", "white")
-      .style("padding", "8px 12px")
-      .style("border-radius", "4px")
-      .style("font-size", "12px")
-      .style("pointer-events", "none")
-      .style("z-index", "1000");
+    const color = category === "crew" ? "#3b82f6" : "#22c55e";
 
     const t = d3.transition().duration(700).ease(d3.easeCubicOut);
 
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("class", `tooltip tooltip-${category}`)
+      .style("position", "absolute")
+      .style("pointer-events", "none")
+      .style("background", "white")
+      .style("border", "1px solid #ccc")
+      .style("padding", "6px 10px")
+      .style("border-radius", "6px")
+      .style("font-size", "12px")
+      .style("color", "#111")
+      .style("display", "none")
+      .style("box-shadow", "0 2px 8px rgba(0,0,0,0.1)")
+      .style("z-index", "1000");
+
     transformedData.forEach((d) => {
-      const xPos = x(`${d.category}-${d.weightClass}`);
+      const xPos = x(d.weightClass);
       const boxWidth = x.bandwidth() * 0.8;
       const boxX = xPos + (x.bandwidth() - boxWidth) / 2;
-      const color = colorScale(d.category);
 
-      // Larger transparent hover area
-      svg
-        .append("rect")
-        .attr("x", xPos)
-        .attr("y", margin.top)
-        .attr("width", x.bandwidth())
-        .attr("height", chartHeight)
-        .attr("fill", "transparent")
-        .style("cursor", "pointer")
-        .on("mouseover", function () {
-          tooltip.style("visibility", "visible").html(`
-            <div><strong>${d.category.toLowerCase()} - ${d.weightClass.toLowerCase()}</strong></div>
-            <div><strong>Count:</strong> ${d.count}</div>
-            <div><strong>Min:</strong> ${d.min}</div>
-            <div><strong>Q1:</strong> ${d.q1}</div>
-            <div><strong>Median:</strong> ${d.median}</div>
-            <div><strong>Q3:</strong> ${d.q3}</div>
-            <div><strong>Max:</strong> ${d.max}</div>
-            <div><strong>Outliers:</strong> ${d.outliers.length}</div>
-          `);
-        })
-        .on("mousemove", function (event) {
-          tooltip
-            .style("top", event.clientY - 10 + "px")
-            .style("left", event.clientX + 10 + "px");
-        })
-        .on("mouseout", function () {
-          tooltip.style("visibility", "hidden");
-        });
-
-      // Larger transparent hover area
-      svg
-        .append("rect")
-        .attr("x", xPos)
-        .attr("y", margin.top)
-        .attr("width", x.bandwidth())
-        .attr("height", chartHeight)
-        .attr("fill", "transparent")
-        .style("cursor", "pointer")
-        .on("mouseover", function () {
-          tooltip.style("visibility", "visible").html(`
-            <div><strong>${d.category.toLowerCase()} - ${d.weightClass.toLowerCase()}</strong></div>
-            <div><strong>Count:</strong> ${d.count}</div>
-            <div><strong>Min:</strong> ${d.min}</div>
-            <div><strong>Q1:</strong> ${d.q1}</div>
-            <div><strong>Median:</strong> ${d.median}</div>
-            <div><strong>Q3:</strong> ${d.q3}</div>
-            <div><strong>Max:</strong> ${d.max}</div>
-            <div><strong>Outliers:</strong> ${d.outliers.length}</div>
-          `);
-        })
-        .on("mousemove", function (event) {
-          tooltip
-            .style("top", event.clientY - 10 + "px")
-            .style("left", event.clientX + 10 + "px");
-        })
-        .on("mouseout", function () {
-          tooltip.style("visibility", "hidden");
-        });
-
-      // Main whisker line (vertical)
       svg
         .append("line")
         .attr("x1", xPos + x.bandwidth() / 2)
@@ -203,38 +91,23 @@ const AboardBoxPlot = ({ data }) => {
         .attr("y1", y(d.median))
         .attr("y2", y(d.median))
         .attr("stroke", color)
-        .attr("stroke-width", 1)
         .transition(t)
         .attr("y1", y(d.min))
         .attr("y2", y(d.max));
 
-      // Min whisker cap
-      svg
-        .append("line")
-        .attr("x1", boxX + boxWidth * 0.25)
-        .attr("x2", boxX + boxWidth * 0.75)
-        .attr("y1", y(d.median))
-        .attr("y2", y(d.median))
-        .attr("stroke", color)
-        .attr("stroke-width", 1)
-        .transition(t)
-        .attr("y1", y(d.min))
-        .attr("y2", y(d.min));
+      ["min", "max"].forEach((bound) => {
+        svg
+          .append("line")
+          .attr("x1", boxX + boxWidth * 0.25)
+          .attr("x2", boxX + boxWidth * 0.75)
+          .attr("y1", y(d.median))
+          .attr("y2", y(d.median))
+          .attr("stroke", color)
+          .transition(t)
+          .attr("y1", y(d[bound]))
+          .attr("y2", y(d[bound]));
+      });
 
-      // Max whisker cap
-      svg
-        .append("line")
-        .attr("x1", boxX + boxWidth * 0.25)
-        .attr("x2", boxX + boxWidth * 0.75)
-        .attr("y1", y(d.median))
-        .attr("y2", y(d.median))
-        .attr("stroke", color)
-        .attr("stroke-width", 1)
-        .transition(t)
-        .attr("y1", y(d.max))
-        .attr("y2", y(d.max));
-
-      // Box (Q1 to Q3)
       svg
         .append("rect")
         .attr("x", boxX)
@@ -244,12 +117,10 @@ const AboardBoxPlot = ({ data }) => {
         .attr("fill", color)
         .attr("fill-opacity", 0.3)
         .attr("stroke", color)
-        .attr("stroke-width", 1)
         .transition(t)
         .attr("y", y(d.q3))
         .attr("height", y(d.q1) - y(d.q3));
 
-      // Median line
       svg
         .append("line")
         .attr("x1", boxX)
@@ -262,8 +133,7 @@ const AboardBoxPlot = ({ data }) => {
         .transition(t)
         .attr("stroke-opacity", 1);
 
-      // Outliers
-      d.outliers.forEach((outlier) => {
+      d.outliers.forEach((o) => {
         svg
           .append("circle")
           .attr("cx", xPos + x.bandwidth() / 2)
@@ -271,96 +141,154 @@ const AboardBoxPlot = ({ data }) => {
           .attr("r", 0)
           .attr("fill", color)
           .attr("stroke", "white")
-          .attr("stroke-width", 1)
           .transition(t)
-          .attr("cy", y(outlier))
+          .attr("cy", y(o))
           .attr("r", 3);
       });
+
+      svg
+        .append("rect")
+        .attr("x", xPos)
+        .attr("y", margin.top)
+        .attr("width", x.bandwidth())
+        .attr("height", chartHeight)
+        .attr("fill", "transparent")
+        .on("mouseover", (event) => {
+          tooltip.style("display", "block").html(
+            `<strong>${d.weightClass}</strong><br/>
+             Min: ${d.min.toFixed(2)}<br/>
+             Q1: ${d.q1.toFixed(2)}<br/>
+             Median: ${d.median.toFixed(2)}<br/>
+             Q3: ${d.q3.toFixed(2)}<br/>
+             Max: ${d.max.toFixed(2)}<br/>
+             Count: ${d.count}`
+          );
+        })
+        .on("mousemove", (event) => {
+          tooltip
+            .style("left", `${event.pageX + 10}px`)
+            .style("top", `${event.pageY - 28}px`);
+        })
+        .on("mouseout", () => {
+          tooltip.style("display", "none");
+        });
     });
 
     svg
       .append("g")
       .attr("transform", `translate(0,${margin.top + chartHeight})`)
-      .call(d3.axisBottom(x))
-      .selectAll("text")
-      .style("text-anchor", "middle")
-      .text((d) => {
-        const [category, weightClass] = d.split("-");
-        return weightClass;
-      });
+      .call(d3.axisBottom(x));
 
     svg
       .append("g")
       .attr("transform", `translate(${margin.left},0)`)
       .call(d3.axisLeft(y));
-
-    svg
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("x", width / 2)
-      .attr("y", height - 10)
-      .attr("fill", "black")
-      .attr("font-weight", "bold")
-      .text("Aircraft Weight Class");
-
-    svg
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr(
-        "transform",
-        `translate(${margin.left / 2}, ${height / 2}) rotate(-90)`
-      )
-      .attr("fill", "black")
-      .attr("font-weight", "bold")
-      .text("Number of People");
-
-    svg
-      .append("text")
-      .attr("x", width / 2)
-      .attr("y", margin.top / 2)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "18px")
-      .attr("font-weight", "bold")
-      .attr("fill", "#1f2937")
-      .text(
-        "Distribution of Crew and Passengers Aboard by Aircraft Weight Class"
-      );
-
-    const legend = svg
-      .append("g")
-      .attr("transform", `translate(${width - 150}, ${margin.top / 2})`);
-
-    categories.forEach((category, i) => {
-      const legendItem = legend
-        .append("g")
-        .attr("transform", `translate(0, ${i * 20})`);
-
-      legendItem
-        .append("rect")
-        .attr("width", 15)
-        .attr("height", 15)
-        .attr("fill", colorScale(category))
-        .attr("fill-opacity", 0.3)
-        .attr("stroke", colorScale(category));
-
-      legendItem
-        .append("text")
-        .attr("x", 20)
-        .attr("y", 12)
-        .attr("font-size", "12px")
-        .text(category.charAt(0).toUpperCase() + category.slice(1));
-    });
-  }, [data, dimensions]);
+  }, [data, dimensions, category]);
 
   return (
-    <div ref={containerRef} className="w-full h-full">
-      <svg
-        ref={svgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        className="w-full h-full"
-        style={{ maxHeight: "100%", maxWidth: "100%" }}
-      />
+    <svg
+      ref={svgRef}
+      width={dimensions.width}
+      height={dimensions.height}
+      style={{ maxWidth: "100%", maxHeight: "100%" }}
+    />
+  );
+};
+
+const AboardBoxPlot = ({ data }) => {
+  const containerRef = useRef();
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  const updateDimensions = useCallback(() => {
+    if (containerRef.current) {
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      const adjustedHeight = Math.max(height - 100, 400);
+      setDimensions({
+        width: Math.max(width / 2 - 20, 300),
+        height: adjustedHeight,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    updateDimensions();
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (containerRef.current) resizeObserver.observe(containerRef.current);
+    window.addEventListener("resize", updateDimensions);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateDimensions);
+    };
+  }, [updateDimensions]);
+
+  const demoData = {
+    crew: {
+      Small: [10, 12, 15, 8, 14, 11, 13, 9, 16, 12],
+      Medium: [18, 22, 25, 20, 24, 19, 23, 21, 26, 22],
+      Large: [35, 40, 45, 38, 42, 37, 44, 41, 46, 39],
+      Heavy: [55, 60, 65, 58, 62, 57, 64, 61, 66, 59],
+    },
+    passengers: {
+      Small: [150, 180, 200, 160, 190, 170, 185, 175, 210, 165],
+      Medium: [300, 350, 400, 320, 380, 340, 370, 360, 420, 330],
+      Large: [800, 900, 1000, 850, 950, 820, 980, 870, 1020, 890],
+      Heavy: [1500, 1800, 2000, 1600, 1900, 1700, 1850, 1750, 2100, 1650],
+    },
+  };
+
+  return (
+    <div className="relative w-full h-full" style={{ minHeight: "580px" }}>
+      <div
+        className="absolute top-0 left-1/2 text-center text-lg font-semibold text-gray-800 w-full px-4"
+        style={{
+          transform: "translateX(-50%)",
+          marginTop: "10px",
+          lineHeight: "1.3",
+        }}
+      >
+        Distribution of Passengers and Crews Aboard
+        <br />
+        by Aircraft Weight Class
+      </div>
+      <div
+        ref={containerRef}
+        className="w-full h-full flex flex-row justify-center items-start gap-4"
+        style={{ paddingTop: "60px", paddingBottom: "40px" }}
+      >
+        <SingleBoxPlot
+          data={data?.crew || demoData.crew}
+          category="crew"
+          dimensions={dimensions}
+        />
+        <SingleBoxPlot
+          data={data?.passengers || demoData.passengers}
+          category="passengers"
+          dimensions={dimensions}
+        />
+      </div>
+
+      <div
+        className="absolute text-sm text-gray-700"
+        style={{
+          bottom: "14px",
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+      >
+        Aircraft Weight Class
+      </div>
+
+      <div
+        className="absolute text-sm text-gray-700"
+        style={{
+          top: "50%",
+          left: "10px",
+          transform: "translateY(-50%) rotate(-90deg)",
+          transformOrigin: "left center",
+        }}
+      >
+        Amount of People
+      </div>
     </div>
   );
 };
