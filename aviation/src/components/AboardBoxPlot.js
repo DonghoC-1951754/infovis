@@ -127,6 +127,8 @@ const AboardBoxPlot = ({ data }) => {
       .style("pointer-events", "none")
       .style("z-index", "1000");
 
+    const t = d3.transition().duration(700).ease(d3.easeCubicOut);
+
     transformedData.forEach((d) => {
       const xPos = x(`${d.category}-${d.weightClass}`);
       const boxWidth = x.bandwidth() * 0.8;
@@ -163,44 +165,91 @@ const AboardBoxPlot = ({ data }) => {
           tooltip.style("visibility", "hidden");
         });
 
+      // Larger transparent hover area
+      svg
+        .append("rect")
+        .attr("x", xPos)
+        .attr("y", margin.top)
+        .attr("width", x.bandwidth())
+        .attr("height", chartHeight)
+        .attr("fill", "transparent")
+        .style("cursor", "pointer")
+        .on("mouseover", function () {
+          tooltip.style("visibility", "visible").html(`
+            <div><strong>${d.category.toLowerCase()} - ${d.weightClass.toLowerCase()}</strong></div>
+            <div><strong>Count:</strong> ${d.count}</div>
+            <div><strong>Min:</strong> ${d.min}</div>
+            <div><strong>Q1:</strong> ${d.q1}</div>
+            <div><strong>Median:</strong> ${d.median}</div>
+            <div><strong>Q3:</strong> ${d.q3}</div>
+            <div><strong>Max:</strong> ${d.max}</div>
+            <div><strong>Outliers:</strong> ${d.outliers.length}</div>
+          `);
+        })
+        .on("mousemove", function (event) {
+          tooltip
+            .style("top", event.clientY - 10 + "px")
+            .style("left", event.clientX + 10 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.style("visibility", "hidden");
+        });
+
+      // Main whisker line (vertical)
       svg
         .append("line")
         .attr("x1", xPos + x.bandwidth() / 2)
         .attr("x2", xPos + x.bandwidth() / 2)
-        .attr("y1", y(d.min))
-        .attr("y2", y(d.max))
+        .attr("y1", y(d.median))
+        .attr("y2", y(d.median))
         .attr("stroke", color)
-        .attr("stroke-width", 1);
+        .attr("stroke-width", 1)
+        .transition(t)
+        .attr("y1", y(d.min))
+        .attr("y2", y(d.max));
 
+      // Min whisker cap
       svg
         .append("line")
         .attr("x1", boxX + boxWidth * 0.25)
         .attr("x2", boxX + boxWidth * 0.75)
-        .attr("y1", y(d.min))
-        .attr("y2", y(d.min))
+        .attr("y1", y(d.median))
+        .attr("y2", y(d.median))
         .attr("stroke", color)
-        .attr("stroke-width", 1);
+        .attr("stroke-width", 1)
+        .transition(t)
+        .attr("y1", y(d.min))
+        .attr("y2", y(d.min));
 
+      // Max whisker cap
       svg
         .append("line")
         .attr("x1", boxX + boxWidth * 0.25)
         .attr("x2", boxX + boxWidth * 0.75)
+        .attr("y1", y(d.median))
+        .attr("y2", y(d.median))
+        .attr("stroke", color)
+        .attr("stroke-width", 1)
+        .transition(t)
         .attr("y1", y(d.max))
-        .attr("y2", y(d.max))
-        .attr("stroke", color)
-        .attr("stroke-width", 1);
+        .attr("y2", y(d.max));
 
+      // Box (Q1 to Q3)
       svg
         .append("rect")
         .attr("x", boxX)
-        .attr("y", y(d.q3))
+        .attr("y", y(d.median))
         .attr("width", boxWidth)
-        .attr("height", y(d.q1) - y(d.q3))
+        .attr("height", 0)
         .attr("fill", color)
         .attr("fill-opacity", 0.3)
         .attr("stroke", color)
-        .attr("stroke-width", 1);
+        .attr("stroke-width", 1)
+        .transition(t)
+        .attr("y", y(d.q3))
+        .attr("height", y(d.q1) - y(d.q3));
 
+      // Median line
       svg
         .append("line")
         .attr("x1", boxX)
@@ -208,17 +257,24 @@ const AboardBoxPlot = ({ data }) => {
         .attr("y1", y(d.median))
         .attr("y2", y(d.median))
         .attr("stroke", color)
-        .attr("stroke-width", 2);
+        .attr("stroke-width", 2)
+        .attr("stroke-opacity", 0)
+        .transition(t)
+        .attr("stroke-opacity", 1);
 
+      // Outliers
       d.outliers.forEach((outlier) => {
         svg
           .append("circle")
           .attr("cx", xPos + x.bandwidth() / 2)
-          .attr("cy", y(outlier))
-          .attr("r", 3)
+          .attr("cy", y(d.median))
+          .attr("r", 0)
           .attr("fill", color)
           .attr("stroke", "white")
-          .attr("stroke-width", 1);
+          .attr("stroke-width", 1)
+          .transition(t)
+          .attr("cy", y(outlier))
+          .attr("r", 3);
       });
     });
 
@@ -266,11 +322,13 @@ const AboardBoxPlot = ({ data }) => {
       .attr("font-size", "18px")
       .attr("font-weight", "bold")
       .attr("fill", "#1f2937")
-      .text("Distribution of People by Category and Weight Class");
+      .text(
+        "Distribution of Crew and Passengers Aboard by Aircraft Weight Class"
+      );
 
     const legend = svg
       .append("g")
-      .attr("transform", `translate(${width - 150}, ${margin.top})`);
+      .attr("transform", `translate(${width - 150}, ${margin.top / 2})`);
 
     categories.forEach((category, i) => {
       const legendItem = legend
