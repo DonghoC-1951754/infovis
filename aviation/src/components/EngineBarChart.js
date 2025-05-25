@@ -190,7 +190,7 @@ const EngineBarChart = ({ data }) => {
       .attr("font-size", "18px")
       .attr("font-weight", "bold")
       .attr("fill", "#1f2937")
-      .text("Accident Rate by Number of Engines");
+      .text("Amount of Accidents by Number of Engines");
   }, [data, dimensions]);
 
   // Calculate total for display under chart

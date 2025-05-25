@@ -84,7 +84,7 @@ const PlaneStats = () => {
                   Engine
                 </div>
               </div>
-              <div className="absolute top-[44%] left-[49%] group">
+              <div className="absolute top-[44%] left-[48.7%] group">
                 <button
                   onClick={handleWeightClick}
                   className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer hover:bg-blue-600 transition-colors"

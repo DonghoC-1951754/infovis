@@ -172,7 +172,7 @@ const WeightBarChart = ({ data }) => {
       .attr("font-size", "18px")
       .attr("font-weight", "bold")
       .attr("fill", "#1f2937")
-      .text("Accident Rate by Weight Class");
+      .text("Amount of Accidents by Weight Class");
   }, [data, dimensions]);
 
   const totalAccidents =
