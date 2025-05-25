@@ -294,7 +294,7 @@ const TimeOfDayChart = ({ data }) => {
       .text("Number of Accidents");
 
     g.append("text")
-      .attr("transform", `translate(${width / 2}, ${height + margin.bottom})`)
+      .attr("transform", `translate(${width / 2}, ${height + margin.bottom-5})`)
       .style("text-anchor", "middle")
       .text("Hour of Day");
 
@@ -375,7 +375,7 @@ const AccidentSeverityChart = ({ data }) => {
 
     d3.selectAll(".severity-tooltip").remove();
 
-    const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+    const margin = { top: 20, right: 30, bottom: 40, left: 60 };
     const width = dimensions.width - margin.left - margin.right;
     const height = dimensions.height - margin.top - margin.bottom;
 
@@ -452,7 +452,7 @@ const AccidentSeverityChart = ({ data }) => {
       .text("Number of Accidents");
 
     g.append("text")
-      .attr("transform", `translate(${width / 2}, ${height + margin.bottom})`)
+      .attr("transform", `translate(${width / 2}, ${height + margin.bottom- 5})`)
       .style("text-anchor", "middle")
       .text("Fatality Range");
 
@@ -564,10 +564,14 @@ const SurvivalRateGauge = ({ data }) => {
   return (
     <div className="text-center">
       <svg ref={svgRef} width="300" height="200" className="mx-auto" />
-      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+      <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
         <div>
           <div className="font-semibold text-gray-900">{survivalStats.totalSurvivors.toLocaleString()}</div>
           <div className="text-gray-600">Total Survivors</div>
+        </div>
+        <div>
+          <div className="font-semibold text-gray-900">{(survivalStats.totalAboard-survivalStats.totalSurvivors).toLocaleString()}</div>
+          <div className="text-gray-600">Total Casualties</div>
         </div>
         <div>
           <div className="font-semibold text-gray-900">{survivalStats.totalAboard.toLocaleString()}</div>
@@ -774,17 +778,14 @@ const GeneralInfo = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100">
       <SidePanel />
-      <div className="flex-1 p-6 lg:p-8">
-        {/* Header */}
+      <div className="flex-1 p-6 lg:p-8 pb-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Aviation Safety Dashboard</h1>
           <p className="text-gray-600">Comprehensive analysis of aviation accident data and safety metrics</p>
         </div>
-
-        {/* Stats Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <StatsCard
             icon={AlertTriangle}
             title="Total Accidents"
@@ -806,21 +807,10 @@ const GeneralInfo = () => {
             title="Peak Year"
             value={loading ? "" : processedStats?.peakYear?.year}
             subtitle={processedStats && `${processedStats.peakYear.count} accidents`}
-            color="purple"
-            loading={loading}
-          />
-          <StatsCard
-            icon={Shield}
-            title="Data Range"
-            value={loading ? "" : processedStats && `${processedStats.maxYear - processedStats.minYear + 1} years`}
-            subtitle={processedStats && `${processedStats.minYear} - ${processedStats.maxYear}`}
-            color="blue"
+            color="orange"
             loading={loading}
           />
         </div>
-
-        {/* Charts Grid */}
-        {/* Timeline Chart - Full Width */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -836,8 +826,6 @@ const GeneralInfo = () => {
             )}
           </div>
         </div>
-
-        {/* Time of Day Chart - Full Width */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-indigo-600" />
@@ -855,7 +843,6 @@ const GeneralInfo = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Severity Chart */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-red-600" />
@@ -871,8 +858,6 @@ const GeneralInfo = () => {
               )}
             </div>
           </div>
-
-          {/* Survival Rate Gauge */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-5 h-5 text-green-600" />
@@ -889,21 +874,19 @@ const GeneralInfo = () => {
             </div>
           </div>
         </div>
-
-        {/* Top Lists Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <TopListCard
             title="Top Countries by Accidents"
             items={processedStats?.topCountries || []}
             icon={MapPin}
-            color="blue"
+            color="gray"
             loading={loading}
           />
           <TopListCard
             title="Top Aircraft Types"
             items={processedStats?.topAircraft || []}
             icon={Plane}
-            color="green"
+            color="gray"
             loading={loading}
           />
           <TopListCard
