@@ -13,7 +13,6 @@ def get_operator_country_amount_by_range(start_date, end_date):
     df = pd.read_csv('../planecrash_data/planecrash_dataset_with_operator_country.csv')
     df['Date'] = pd.to_datetime(df['Date'], format='%B %d, %Y')
 
-    # Define start and end dates
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
@@ -22,7 +21,7 @@ def get_operator_country_amount_by_range(start_date, end_date):
     country_counts = filtered_df['Operator Country'].value_counts().reset_index()
     country_counts.columns = ['Operator Country', 'Count']
     country_counts = country_counts.sort_values(by="Count", ascending=False)
-    # Convert the result to JSON format
+    
     result_json = country_counts.to_json(orient='records')
     return result_json
 
@@ -31,7 +30,7 @@ def get_list_of_manufacturers():
 
     with open('../planecrash_data/manufacturer_list.csv', mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader)  # Skip header
+        next(reader)
         for row in reader:
             manufacturers.append(row[0])
     return manufacturers
@@ -56,8 +55,6 @@ def get_number_of_accidents():
     return json_result
 
 def get_number_of_accidents_per_year():
-
-    # Read the CSV files
     crashes_df = pd.read_csv("../planecrash_data/planecrash_dataset_with_manufacturers.csv")
     manufacturers_df = pd.read_csv("../planecrash_data/manufacturer_list.csv")
     
@@ -67,25 +64,21 @@ def get_number_of_accidents_per_year():
     # Get list of all years in the crashes data
     all_years = crashes_df['Year'].unique()
     
-    # Initialize result structure
     result = []
     
     # For each year, count occurrences of each manufacturer
     for year in sorted(all_years):
         year_data = {"year": int(year)}
         
-        # Filter crashes for this year
         year_crashes = crashes_df[crashes_df['Year'] == year]
         
         # Count each manufacturer
         for manufacturer in all_manufacturers:
-            # Count occurrences of this manufacturer in this year
             count = len(year_crashes[year_crashes['Manufacturer'] == manufacturer])
             year_data[manufacturer] = count
         
         result.append(year_data)
     
-    # Convert to JSON
     return json.dumps(result, indent=2)
 
 def get_cluster_data():
@@ -244,3 +237,29 @@ def get_accident_rate_per_wingspan_bin():
 
     json_output = json.dumps(histogram_json, indent=2)
     return json_output
+
+def get_all_accident_data_without_summaries():
+    df = pd.read_csv('../planecrash_data/planecrash_dataset_with_operator_country.csv')
+    
+    columns_to_keep = [
+        'AC Type',
+        'Aboard',
+        'Date',
+        'Fatalities',
+        'Flight #',
+        'Ground',
+        'Location',
+        'Operator',
+        'Registration',
+        'Route',
+        'Time',
+        'Year',
+        'cn / ln',
+        'Operator Country'
+    ]
+    
+    available_columns = [col for col in columns_to_keep if col in df.columns]
+    filtered_df = df[available_columns]
+    
+    result_json = filtered_df.to_json(orient='records', force_ascii=False)
+    return result_json
