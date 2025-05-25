@@ -52,7 +52,6 @@ const WingspanHistogram = ({ data }) => {
     )
       return;
 
-    // data is expected to be array of { bin_start, bin_end, accident_count }
     const transformedData = data.map((d) => ({
       binLabel: `${d.bin_start}-${d.bin_end}`,
       binStart: d.bin_start,
@@ -71,7 +70,6 @@ const WingspanHistogram = ({ data }) => {
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
-    // For x scale, use linear scale from min bin_start to max bin_end
     const x = d3
       .scaleLinear()
       .domain([
@@ -87,7 +85,6 @@ const WingspanHistogram = ({ data }) => {
       .nice()
       .range([margin.top + chartHeight, margin.top]);
 
-    // Tooltip setup
     const tooltip = d3
       .select("body")
       .selectAll(".tooltip")
@@ -111,8 +108,8 @@ const WingspanHistogram = ({ data }) => {
       .data(transformedData)
       .join("rect")
       .attr("x", (d) => x(d.binStart))
-      .attr("width", (d) => x(d.binEnd) - x(d.binStart) - 1) // -1 for small gap between bars
-      .attr("y", y(0)) // start at bottom
+      .attr("width", (d) => x(d.binEnd) - x(d.binStart) - 1) 
+      .attr("y", y(0))
       .attr("height", 0)
       .attr("fill", "#db291d")
       .style("cursor", "pointer")
@@ -145,7 +142,7 @@ const WingspanHistogram = ({ data }) => {
       .attr("height", (d) => y(0) - y(d.count))
       .delay((_, i) => i * 100);
 
-    // X axis with ticks (whiskers)
+    // X axis with ticks
     const xAxis = d3
       .axisBottom(x)
       .tickValues(
@@ -202,7 +199,6 @@ const WingspanHistogram = ({ data }) => {
       .text("Amount of Accidents by Wingspan");
   }, [data, dimensions]);
 
-  // Calculate total accidents
   const totalAccidents = data
     ? data.reduce((sum, d) => sum + d.accident_count, 0)
     : 0;

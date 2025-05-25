@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-// Shared fixed color palette - SAME AS LINE CHART
 const sharedColors = [
   ...d3.schemeCategory10,
   ...d3.schemeSet2,
@@ -13,7 +12,6 @@ export default function PieChartManufacturerAccidentContribution() {
   const [selectedYear, setSelectedYear] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Removed colorScale state since we're using hardcoded colors
   const [hoverInfo, setHoverInfo] = useState(null);
   const svgRef = useRef();
   const chartContainerRef = useRef();
@@ -96,7 +94,6 @@ export default function PieChartManufacturerAccidentContribution() {
       .append("g")
       .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-    // Extract ALL manufacturers from ALL years to ensure consistent color mapping
     const allManufacturersFromAllData = [];
     data.forEach((yearData) => {
       Object.keys(yearData).forEach((key) => {
@@ -106,7 +103,6 @@ export default function PieChartManufacturerAccidentContribution() {
       });
     });
 
-    // Sort manufacturers to ensure consistent ordering (same as line chart)
     const sortedAllManufacturers = allManufacturersFromAllData.sort();
 
     // Create color scale with ALL manufacturers using shared colors
@@ -115,7 +111,6 @@ export default function PieChartManufacturerAccidentContribution() {
       .domain(sortedAllManufacturers)
       .range(sharedColors.slice(0, sortedAllManufacturers.length));
 
-    // Remove this line since we're not using colorScale state anymore
 
     const pie = d3
       .pie()
@@ -218,7 +213,6 @@ export default function PieChartManufacturerAccidentContribution() {
       });
     });
 
-    // Sort manufacturers (same as line chart)
     const sortedAllManufacturers = allManufacturersFromAllData.sort();
 
     // Create color scale with shared colors
@@ -247,13 +241,11 @@ export default function PieChartManufacturerAccidentContribution() {
             ))}
           </select>
 
-          {/* Total Accidents Display */}
           <div className="mt-6">
             <h3 className="font-medium mb-2">Total Accidents:</h3>
             <div className="text-lg font-bold">{totalAccidents}</div>
           </div>
 
-          {/* Manufacturers List */}
           <div className="mt-6">
             <ul className="space-y-2">
               {chartData &&
@@ -279,11 +271,9 @@ export default function PieChartManufacturerAccidentContribution() {
           </div>
         </div>
 
-        {/* Chart */}
         <div className="relative" ref={chartContainerRef}>
           <svg ref={svgRef} className="w-full h-full"></svg>
 
-          {/* Hover Tooltip */}
           {hoverInfo && (
             <div
               className="absolute bg-white p-2 rounded shadow-md border border-gray-300 z-10 text-sm"

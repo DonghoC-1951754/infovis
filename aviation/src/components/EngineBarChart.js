@@ -9,8 +9,7 @@ const EngineBarChart = ({ data }) => {
   const updateDimensions = useCallback(() => {
     if (containerRef.current) {
       const { width, height } = containerRef.current.getBoundingClientRect();
-      // Ensure we have reasonable minimum dimensions and account for the text below
-      const adjustedHeight = Math.max(height - 40, 200); // Reserve space for total text
+      const adjustedHeight = Math.max(height - 40, 200);
       setDimensions({
         width: Math.max(width, 300),
         height: adjustedHeight,
@@ -29,20 +28,17 @@ const EngineBarChart = ({ data }) => {
       resizeObserver.observe(containerRef.current);
     }
 
-    // Fallback for older browsers
     const handleResize = () => {
       setTimeout(updateDimensions, 100);
     };
 
     window.addEventListener("resize", handleResize);
 
-    // Cleanup any existing tooltips on component mount
     d3.selectAll(".tooltip").remove();
 
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
-      // Clean up tooltips on unmount
       d3.selectAll(".tooltip").remove();
     };
   }, [updateDimensions]);
@@ -56,7 +52,6 @@ const EngineBarChart = ({ data }) => {
     )
       return;
 
-    // Convert object to array
     const transformedData = Object.entries(data).map(
       ([engine_count, accident_rate]) => ({
         engine_count,
@@ -67,7 +62,6 @@ const EngineBarChart = ({ data }) => {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    // Clean up any existing tooltips before creating new ones
     d3.selectAll(".tooltip").remove();
 
     const width = dimensions.width;
@@ -100,7 +94,6 @@ const EngineBarChart = ({ data }) => {
         .call(d3.axisLeft(y))
         .call((g) => g.select(".domain").remove());
 
-    // Tooltip
     const tooltip = d3
       .select("body")
       .selectAll(".tooltip")
@@ -129,8 +122,8 @@ const EngineBarChart = ({ data }) => {
       .join("rect")
       .attr("x", (d) => x(d.engine_count))
       .attr("width", x.bandwidth())
-      .attr("y", y(0)) // start at y(0) (bottom of chart)
-      .attr("height", 0) // initial height 0
+      .attr("y", y(0)) 
+      .attr("height", 0) 
       .attr("fill", "#db291d")
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {
@@ -155,8 +148,8 @@ const EngineBarChart = ({ data }) => {
       })
       .transition()
       .duration(1000)
-      .attr("y", (d) => y(d.accident_rate)) // final y position
-      .attr("height", (d) => y(0) - y(d.accident_rate)); // final height
+      .attr("y", (d) => y(d.accident_rate)) 
+      .attr("height", (d) => y(0) - y(d.accident_rate)); 
 
     svg.append("g").call(xAxis);
 
@@ -193,7 +186,6 @@ const EngineBarChart = ({ data }) => {
       .text("Amount of Accidents by Number of Engines");
   }, [data, dimensions]);
 
-  // Calculate total for display under chart
   const totalAccidents =
     data && typeof data === "object"
       ? Object.values(data).reduce((sum, v) => sum + v, 0)

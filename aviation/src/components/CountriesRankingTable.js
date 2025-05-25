@@ -21,7 +21,6 @@ const CountriesRankingTable = ({ data, selectedCountry, onCountrySelect }) => {
       const rowTop = selectedRow.offsetTop;
       const rowHeight = selectedRow.clientHeight;
 
-      // Center the row in the container
       const scrollTop = rowTop - containerHeight / 2 + rowHeight / 2;
 
       container.scrollTo({

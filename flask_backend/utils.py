@@ -5,10 +5,20 @@ import os
 import sys
 import numpy as np
 import math
-import re
 from flask import request, jsonify
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from aviation.scripts.summary_clustering import clustering_main
+import re
+from geopy.geocoders import Nominatim
+import time
+from functools import lru_cache
+
+def extract_leading_int(value):
+    if pd.notna(value):
+        match = re.match(r'\s*(\d+)', str(value))
+        if match:
+            return int(match.group(1))
+    return 0
 
 def get_operator_country_amount_by_range(start_date, end_date):
     df = pd.read_csv('../planecrash_data/planecrash_dataset_with_operator_country.csv')
@@ -185,7 +195,6 @@ def get_accident_rate_per_weight_class():
 
     weights = filtered_df['MTOW_lb'].dropna()
 
-    # Define weight classes based on your criteria
     def classify_weight(w):
         if w > 255000:
             return "Heavy"
@@ -196,13 +205,10 @@ def get_accident_rate_per_weight_class():
         else:
             return "Small"
 
-    # Classify each weight
     weight_classes = weights.apply(classify_weight)
 
-    # Count the number of occurrences in each class
     counts = weight_classes.value_counts().to_dict()
 
-    # Make sure all classes appear in the output, even if count is zero
     all_classes = ["Small", "Medium", "Large", "Heavy"]
     result = {cls: counts.get(cls, 0) for cls in all_classes}
 
@@ -376,3 +382,215 @@ def get_accident_rate_per_length_bin():
 
     json_output = json.dumps(histogram_json, indent=2)
     return json_output
+geolocator = Nominatim(user_agent="aviation_crashes_app")
+
+# Global variable to store geocoded data, if loading live it otherwise takes ~ 2-3 hours
+GEOCODED_CACHE = {}
+
+def load_geocoded_cache():
+    global GEOCODED_CACHE
+    
+    geocoded_file = '../planecrash_data/geocoded_locations.csv'
+    if os.path.exists(geocoded_file):
+        geocoded_df = pd.read_csv(geocoded_file)
+        GEOCODED_CACHE = dict(zip(geocoded_df['location'], 
+                                 zip(geocoded_df['latitude'], geocoded_df['longitude'])))
+        print(f"Loaded {len(GEOCODED_CACHE)} cached locations")
+    else:
+        print("No geocoded cache found. Run build_geocoding_cache() first.")
+
+# Only needs to be ran once to build the geocoding cache if this does not exist (see buildGeocache.py to run).
+def build_geocoding_cache():
+    print("Building geocoding cache...")
+    df = pd.read_csv('../planecrash_data/planecrash_dataset_with_operator_country.csv')
+    
+    unique_locations = set()
+    
+    crash_locations = df['Location'].dropna().unique()
+    unique_locations.update(crash_locations)
+    
+    route_locations = df['Route'].dropna().unique()
+    for route in route_locations:
+        origin, destination = parse_route(route)
+        if origin:
+            unique_locations.add(origin)
+        if destination:
+            unique_locations.add(destination)
+    
+    print(f"Found {len(unique_locations)} unique locations to geocode")
+    
+    geocoded_locations = []
+    failed_locations = []
+    
+    for i, location in enumerate(unique_locations, 1):
+        print(f"Geocoding {i}/{len(unique_locations)}: {location}")
+        
+        lat, lng = geocode_location(location)
+        if lat and lng:
+            geocoded_locations.append({
+                'location': location,
+                'latitude': lat,
+                'longitude': lng
+            })
+        else:
+            failed_locations.append(location)
+        
+        # Rate limiting
+        time.sleep(0.1)
+        
+        # Save progress every 100 locations
+        if i % 100 == 0:
+            temp_df = pd.DataFrame(geocoded_locations)
+            temp_df.to_csv('../planecrash_data/geocoded_locations_temp.csv', index=False)
+            print(f"Saved progress: {len(geocoded_locations)} successful geocodes")
+    
+    final_df = pd.DataFrame(geocoded_locations)
+    final_df.to_csv('../planecrash_data/geocoded_locations.csv', index=False)
+    
+    
+    print(f"Geocoding complete!")
+    print(f"Successfully geocoded: {len(geocoded_locations)}")
+    print(f"Failed to geocode: {len(failed_locations)}")
+    
+    return final_df
+
+# Only used during cache building
+@lru_cache(maxsize=1000)
+def geocode_location(location_string):
+    if not location_string or pd.isna(location_string):
+        return None, None
+    
+    try:
+        location = str(location_string).strip()
+        location = re.sub(r'^(Near|Off|About)\s+', '', location, flags=re.IGNORECASE)
+        location = re.sub(r'\s+\(.*?\)$', '', location)
+        
+        result = geolocator.geocode(location, timeout=10)
+        
+        if result:
+            return result.latitude, result.longitude
+        else:
+            return None, None
+            
+    except Exception as e:
+        print(f"Geocoding error for '{location_string}': {e}")
+        return None, None
+
+def get_coordinates(location):
+    global GEOCODED_CACHE
+    return GEOCODED_CACHE.get(location, (None, None))
+
+@lru_cache(maxsize=500)
+def parse_route(route_string):
+    if not route_string or pd.isna(route_string):
+        return None, None
+    
+    route = str(route_string).strip()
+    separators = [' - ', ' to ', ' → ', ' -> ', ' — ', '--']
+    
+    for sep in separators:
+        if sep in route:
+            parts = route.split(sep, 1)
+            if len(parts) == 2:
+                origin = parts[0].strip()
+                destination = parts[1].strip()
+                
+                if len(origin) > 2 and len(destination) > 2:
+                    return origin, destination
+    
+    return None, None
+
+def extract_leading_int(value):
+    if pd.notna(value):
+        match = re.match(r'\s*(\d+)', str(value))
+        if match:
+            return int(match.group(1))
+    return 0
+
+def get_crash_locations_data_optimized(start_date, end_date):
+    df = pd.read_csv('../planecrash_data/planecrash_dataset_with_operator_country.csv')
+    df['Date'] = pd.to_datetime(df['Date'], format='%B %d, %Y')
+
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    # Filter by date range
+    filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)].copy()
+    
+    crash_locations = []
+    
+    for idx, row in filtered_df.iterrows():
+        if pd.isna(row['Location']) or not str(row['Location']).strip():
+            continue
+            
+        location = str(row['Location']).strip()
+        
+        # Get coordinates from cache
+        lat, lng = get_coordinates(location)
+        
+        if lat and lng:
+            crash_data = {
+                'location': location,
+                'latitude': lat,
+                'longitude': lng,
+                'date': row['Date'].strftime('%Y-%m-%d') if pd.notna(row['Date']) else None,
+                'operator': row['Operator'] if pd.notna(row['Operator']) else 'Unknown',
+                'ac_type': row['AC Type'] if pd.notna(row['AC Type']) else 'Unknown',
+                'fatalities': extract_leading_int(row['Fatalities']),
+                'aboard': int(row['Aboard']) if pd.notna(row['Aboard']) and str(row['Aboard']).replace(' ', '').isdigit() else 0,
+                'flight_number': row['Flight #'] if pd.notna(row['Flight #']) else None,
+                'summary': row['Summary'] if pd.notna(row['Summary']) else None
+            }
+            crash_locations.append(crash_data)
+    
+    return jsonify(crash_locations)
+
+def get_flight_routes_data_optimized(start_date, end_date):
+    df = pd.read_csv('../planecrash_data/planecrash_dataset_with_operator_country.csv')
+    df['Date'] = pd.to_datetime(df['Date'], format='%B %d, %Y')
+
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    # Filter by date range
+    filtered_df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)].copy()
+    
+    route_df = filtered_df[filtered_df['Route'].notna() & (filtered_df['Route'] != '')].copy()
+    
+    flight_routes = []
+    
+    for idx, row in route_df.iterrows():
+        route_string = str(row['Route']).strip()
+        
+        # Parse the route
+        origin, destination = parse_route(route_string)
+        
+        if origin and destination:
+            # Get coordinates from cache
+            origin_lat, origin_lng = get_coordinates(origin)
+            dest_lat, dest_lng = get_coordinates(destination)
+            
+            if origin_lat and origin_lng and dest_lat and dest_lng:
+                route_data = {
+                    'route_string': route_string,
+                    'origin_city': origin,
+                    'destination_city': destination,
+                    'origin_lat': origin_lat,
+                    'origin_lng': origin_lng,
+                    'destination_lat': dest_lat,
+                    'destination_lng': dest_lng,
+                    'date': row['Date'].strftime('%Y-%m-%d') if pd.notna(row['Date']) else None,
+                    'operator': row['Operator'] if pd.notna(row['Operator']) else 'Unknown',
+                    'ac_type': row['AC Type'] if pd.notna(row['AC Type']) else 'Unknown',
+                    'fatalities': extract_leading_int(row['Fatalities']),
+                    'aboard': int(row['Aboard']) if pd.notna(row['Aboard']) and str(row['Aboard']).replace(' ', '').isdigit() else 0,
+                    'flight_number': row['Flight #'] if pd.notna(row['Flight #']) else None,
+                    'summary': row['Summary'] if pd.notna(row['Summary']) else None
+                }
+                flight_routes.append(route_data)
+    
+    return jsonify(flight_routes)
+
+# Initialize the cache when the module is imported
+def init_app():
+    load_geocoded_cache()

@@ -17,7 +17,6 @@ const SingleBoxPlot = ({ data, category, dimensions, title }) => {
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
-    // Add title
     svg
       .append("text")
       .attr("x", width / 2)

@@ -17,7 +17,7 @@ const About = () => {
       contributions: [
         "General Info page",
         "Accident Classifications page",
-        "Countries page: ...",
+        "Countries page: Crashes map, Flight paths map and backend logic to populate the geocoded_locations",
         "Processing, clustering and backend logic",
       ],
     },

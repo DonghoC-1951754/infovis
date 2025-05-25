@@ -103,9 +103,9 @@ const WeightBarChart = ({ data }) => {
       .data(transformedData)
       .join("rect")
       .attr("x", (d) => x(d.weightClass))
-      .attr("y", y(0)) // start from bottom
+      .attr("y", y(0)) // Start from bottom(, now we here)
       .attr("width", x.bandwidth())
-      .attr("height", 0) // start with height 0
+      .attr("height", 0)
       .attr("fill", "#db291d")
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {

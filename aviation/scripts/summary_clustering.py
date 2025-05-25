@@ -15,12 +15,10 @@ from sklearn.metrics import silhouette_score
 import sys
 import json
 
-# Your existing preprocessing code stays the same
 nltk.download('punkt', quiet=True)
 nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 
-# Keep your custom stopwords
 unnecessary_words = ["crashed", "aircraft", "plane", "pilot", "crew", "flight", "runway", "approach", "taking", "mile",
                      "attempting", "route", "en", "ft", "due", "foot", "left", "right", "shortly", "two", "one",
                      "short", "minute", "caused", "procedure", "cause", "caused", "procedure", "airplane", "turn", "km", "resulted",
@@ -69,7 +67,6 @@ custom_stopwords = set(
     misc_words
 )
 
-#Create comprehensive patterns for each category
 patterns = {
     'Weather-related': {
         'keywords': ['storm', 'weather', 'lightning', 'thunderstorm', 'fog', 'rain', 'downdraft', 'wind',
@@ -181,7 +178,7 @@ def calculate_category_scores(text, patterns):
 def hybrid_clustering_approach(df, summary_column):
     """Combine rule-based categorization with clustering validation"""
 
-    # Step 1: Rule-based initial categorization
+    # Rule-based initial categorization
     def categorize_by_rules(text):
         scores = calculate_category_scores(text, patterns)
 
@@ -191,10 +188,8 @@ def hybrid_clustering_approach(df, summary_column):
         if not matched_categories:
             return "Unclear cause"
         
-        # Get the maximum score
         max_score = max(matched_categories.values())
 
-        # Get all categories with the max score
         tied_categories = [cat for cat, score in matched_categories.items() if score == max_score]
 
         # Break tie with category priority
@@ -204,7 +199,7 @@ def hybrid_clustering_approach(df, summary_column):
 
     df['rule_based_category'] = df[summary_column].apply(categorize_by_rules)
 
-    # Step 2: TF-IDF clustering for validation/refinement
+    # TF-IDF clustering for validation/refinement
     def preprocess_text(text):
         if not isinstance(text, str):
             return ""
@@ -224,7 +219,6 @@ def hybrid_clustering_approach(df, summary_column):
     tfidf_matrix = tfidf_vectorizer.fit_transform(df['processed_summary'])
     tfidf_norm = normalize(tfidf_matrix)
 
-    # Dimensionality reduction
     n_components = min(20, tfidf_norm.shape[1] - 1, tfidf_norm.shape[0] - 1)
     svd = TruncatedSVD(n_components=n_components)
     reduced_features = svd.fit_transform(tfidf_norm)
@@ -233,11 +227,11 @@ def hybrid_clustering_approach(df, summary_column):
     df['x'] = reduced_features[:, 0]
     df['y'] = reduced_features[:, 1]
 
-    # Step 3: K-means with 8 clusters to validate rule-based approach
-    kmeans = KMeans(n_clusters=8, random_state=42, n_init=10)
+    # K-means with 13 clusters to validate rule-based approach
+    kmeans = KMeans(n_clusters=13, random_state=50, n_init=10)
     df['kmeans_cluster'] = kmeans.fit_predict(reduced_features)
 
-    # Step 4: Create hybrid categories
+    # Create hybrid categories
     def create_hybrid_category(row):
         rule_cat = row['rule_based_category']
         cluster_id = row['kmeans_cluster']
@@ -250,7 +244,6 @@ def hybrid_clustering_approach(df, summary_column):
         clear_cats = cluster_rule_cats[cluster_rule_cats != "Unclear cause"]
 
         if len(clear_cats) > 0:
-            # Select the category with highest priority (lowest index)
             sorted_cats = sorted(clear_cats, key=lambda cat: CATEGORY_PRIORITY.index(cat))
             return sorted_cats[0]
 
@@ -258,7 +251,6 @@ def hybrid_clustering_approach(df, summary_column):
 
     df['hybrid_category'] = df.apply(create_hybrid_category, axis=1)
     
-    # Add the interpretation column for compatibility
     df['kmeans_cluster_interpretation'] = df['hybrid_category']
 
     return df, tfidf_matrix, tfidf_vectorizer
@@ -280,7 +272,6 @@ def analyze_cluster_quality(df):
     for cat, count in hybrid_counts.items():
         print(f"  {cat}: {count} ({count / len(df) * 100:.1f}%)")
 
-    # Print some examples if necessary
     # print(f"\n=== SAMPLE CATEGORIZATIONS ===")
     # for category in df['hybrid_category'].unique():
     #     if category != "Unclear cause":
@@ -310,20 +301,15 @@ def clustering_main(input_file, output_file):
 
     df = df.dropna(subset=[summary_column]).reset_index(drop=True)
 
-    # Apply hybrid clustering
     df, tfidf_matrix, vectorizer = hybrid_clustering_approach(df, summary_column)
 
-    # Analyze results
     analyze_cluster_quality(df)
 
-    # Create category to ID mapping for consistent ordering
     unique_categories = sorted(df['hybrid_category'].unique())
     category_to_id = {category: idx for idx, category in enumerate(unique_categories)}
     
-    # Add cluster IDs based on categories
     df['category_id'] = df['hybrid_category'].map(category_to_id)
 
-    # Prepare clusters data in the format expected by frontend
     clusters_data = []
     for category in unique_categories:
         category_mask = df['hybrid_category'] == category
@@ -335,13 +321,11 @@ def clustering_main(input_file, output_file):
             "size": int(category_mask.sum())
         })
 
-    # Create distribution data
     distribution = {}
     for category in unique_categories:
         count = df[df['hybrid_category'] == category].shape[0]
         distribution[category] = count
 
-    # Save JSON output in the format expected by frontend
     output_data = {
         "kmeans": {
             "clusters": clusters_data,
@@ -352,12 +336,11 @@ def clustering_main(input_file, output_file):
     with open(output_file, 'w') as f:
         json.dump(output_data, f, indent=2)
 
-    # Save CSV with all results - use the correct output path
+    # Save CSV with all results
     script_dir = os.path.dirname(os.path.abspath(__file__))
     csv_output_file = os.path.abspath(os.path.join(script_dir, '..', '..', 'planecrash_data', 'aircraft_crashes_clustered.csv'))
     
-    # Make sure we have the right column names for the frontend
-    df['kmeans_cluster'] = df['category_id']  # Use category ID as cluster ID
+    df['kmeans_cluster'] = df['category_id']  
     
     df.to_csv(csv_output_file, index=False)
 

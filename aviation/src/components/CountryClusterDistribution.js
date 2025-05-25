@@ -123,16 +123,13 @@ const CountryClusterDistribution = ({ clusterData }) => {
     const data = countryData[selectedCountry];
     const { processedData, otherData } = processDataForPieChart(data);
     
-    // Store other categories data for tooltips and legend
     setOtherCategoriesData(otherData);
 
-    // Chart dimensions
     const width = 500;
     const height = 400;
     const margin = 40;
     const radius = Math.min(width, height) / 2 - margin;
 
-    // Create SVG
     const svg = d3.select(pieChartRef.current)
       .append("svg")
       .attr("width", width)
@@ -144,17 +141,14 @@ const CountryClusterDistribution = ({ clusterData }) => {
     // Use the same color scale as home.js
     const color = getClusterColor();
 
-    // Pie generator
     const pie = d3.pie()
       .value(d => d.count)
       .sort(null);
 
-    // Arc generator
     const arc = d3.arc()
       .innerRadius(0)
       .outerRadius(radius);
 
-    // Create tooltip
     let tooltip = d3.select("body").select(".pie-tooltip");
     if (tooltip.empty()) {
       tooltip = d3.select("body")
@@ -172,7 +166,6 @@ const CountryClusterDistribution = ({ clusterData }) => {
         .style("max-width", "250px");
     }
 
-    // Create pie slices
     const slices = g.selectAll(".slice")
       .data(pie(processedData))
       .enter()
@@ -183,7 +176,7 @@ const CountryClusterDistribution = ({ clusterData }) => {
       .attr("d", arc)
       .attr("fill", d => {
         if (d.data.isOther) {
-          return "#cccccc"; // Gray color for "Other"
+          return "#cccccc"; // "Other"
         }
         // Use cluster ID to get the correct color from home.js color scale
         return color(d.data.clusterId);
@@ -233,7 +226,6 @@ const CountryClusterDistribution = ({ clusterData }) => {
         tooltip.style("opacity", 0);
       });
 
-    // Add title
     svg.append("text")
       .attr("x", width / 2)
       .attr("y", 25)
@@ -242,7 +234,6 @@ const CountryClusterDistribution = ({ clusterData }) => {
       .style("font-weight", "bold")
       .text(`Accident Types Distribution - ${selectedCountry}`);
 
-    // Add total count
     const totalAccidents = Object.values(data).reduce((sum, count) => sum + count, 0);
     svg.append("text")
       .attr("x", width / 2)
@@ -288,7 +279,6 @@ const CountryClusterDistribution = ({ clusterData }) => {
         <div ref={pieChartRef} className="w-full max-w-md"></div>
       </div>
 
-      {/* Legend */}
       {selectedCountry && countryData[selectedCountry] && (
         <div className="mt-6">
           <h3 className="text-lg font-medium mb-3">Distribution Details</h3>
@@ -317,7 +307,6 @@ const CountryClusterDistribution = ({ clusterData }) => {
             })()}
           </div>
           
-          {/* Show breakdown of "Other" categories */}
           {Object.keys(otherCategoriesData).length > 0 && (
             <div className="mt-4 p-3 bg-gray-50 rounded-md">
               <h4 className="text-sm font-medium mb-0.5">"Other" Categories Breakdown:</h4>

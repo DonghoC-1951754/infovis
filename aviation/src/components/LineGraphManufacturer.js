@@ -15,7 +15,6 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
     ...d3.schemeSet3,
   ];
 
-  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -75,7 +74,6 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
       .domain(allManufacturers)
       .range(sharedColors.slice(0, allManufacturers.length));
 
-    // Filter keys to only selected manufacturers
     const keys = Array.from(selectedManufacturers);
 
     // Prepare filtered data for selected manufacturers
@@ -130,7 +128,6 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
       .style("font-size", "16px")
       .text("Number of accidents");
 
-    // Line generator
     const line = d3
       .line()
       .x((d) => x(d.year))
@@ -159,7 +156,6 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
         .style("stroke-dashoffset", 0);
     });
 
-    // Focus group for mouseover circles
     const focusGroup = svg.append("g").style("display", "none");
 
     const focusCircles = keys.map((key) =>
@@ -171,7 +167,6 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
         .style("stroke-width", 1)
     );
 
-    // Tooltip group
     const tooltip = svg
       .append("g")
       .attr("class", "tooltip")
@@ -238,7 +233,6 @@ const LineGraphManufacturer = ({ id, title, selectedManufacturers }) => {
         );
       });
 
-    // Render HTML legend
     const legend = d3.select(legendContainer.current);
 
     keys.forEach((key) => {

@@ -6,7 +6,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
   const [viewMode, setViewMode] = useState('yearly'); 
   const [showCumulative, setShowCumulative] = useState(false);
 
-  // Helper function to create valid CSS class names from cluster names
   const sanitizeClassName = (clusterName) => {
     return clusterName
       .replace(/[^a-zA-Z0-9\s-]/g, '') 
@@ -25,40 +24,11 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
   const processTemporalData = () => {
     if (!clusterData?.points) return [];
 
-    // DEBUG: Log the data structure
-    console.log('=== DEBUGGING TEMPORAL DATA ===');
-    console.log('Total points:', clusterData.points.length);
-    console.log('Selected clusters:', selectedClusters);
-    console.log('First few points:', clusterData.points.slice(0, 3));
-
-    // Check what fields are available
-    if (clusterData.points.length > 0) {
-        const samplePoint = clusterData.points[0];
-        console.log('Available fields in first point:', Object.keys(samplePoint));
-        console.log('Sample point:', samplePoint);
-    }
-
-    // Check cluster matching
-    const clusterValues = [...new Set(clusterData.points.map(p => p.kmeans_cluster))];
-    console.log('Unique cluster values in data:', clusterValues);
-    console.log('Types of cluster values:', clusterValues.map(v => typeof v));
-    console.log('Types of selected clusters:', selectedClusters.map(v => typeof v));
-
-    // Check year data
-    const yearValues = clusterData.points.map(p => p.Year).filter(Boolean);
-    console.log('Year values found:', yearValues.slice(0, 10));
-    console.log('Points with Year data:', yearValues.length);
-
-    // Filter points by selected clusters
     const filteredPoints = clusterData.points.filter(point => 
       selectedClusters.includes(point.kmeans_cluster) && 
       point.Year && !isNaN(point.Year)
     );
-
-    console.log('Filtered points after cluster and year filter:', filteredPoints.length);
-    console.log('=== END DEBUG ===');
     
-    // Get cluster interpretations
     const clusterMap = {};
     if (clusterData.kmeans?.clusters) {
       clusterData.kmeans.clusters.forEach(cluster => {
@@ -66,7 +36,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       });
     }
 
-    // Find the full range of years in the entire dataset (not just filtered)
     const allYearsInDataset = clusterData.points
       .map(p => p.Year)
       .filter(year => year && !isNaN(year));
@@ -74,12 +43,10 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
     const minYear = Math.min(...allYearsInDataset);
     const maxYear = Math.max(...allYearsInDataset);
 
-    // Get all cluster names that we'll be working with
     const allClusters = [...new Set(filteredPoints.map(p => 
       clusterMap[p.kmeans_cluster] || `Cluster ${p.kmeans_cluster}`
     ))];
 
-    // Group by time period and cluster
     const groupedData = {};
     
     if (viewMode === 'yearly') {
@@ -109,7 +76,7 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
           else if (month >= 8 && month <= 10) timePeriod = 'Fall';
           else timePeriod = 'Winter';
         } else {
-          return; // Skip if no date info for seasonal view
+          return;
         }
       }
 
@@ -126,7 +93,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       groupedData[timePeriod][clusterName]++;
     });
 
-    // Convert to array format for D3
     const timePoints = Object.keys(groupedData).sort((a, b) => {
       if (viewMode === 'seasonal') {
         const order = { 'Spring': 0, 'Summer': 1, 'Fall': 2, 'Winter': 3 };
@@ -143,7 +109,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       return entry;
     });
 
-    // Apply cumulative if selected
     if (showCumulative && viewMode !== 'seasonal') {
       allClusters.forEach(cluster => {
         let cumulative = 0;
@@ -160,7 +125,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
   const renderTemporalChart = () => {
     if (!chartRef.current) return;
 
-    // Clear previous chart
     d3.select(chartRef.current).selectAll("*").remove();
 
     const { data, clusters } = processTemporalData();
@@ -184,7 +148,7 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
 
     const margin = { top: 60, right: 200, bottom: 80, left: 60 };
     const containerWidth = chartRef.current.clientWidth;
-    const containerHeight = 400; // or make this dynamic too if needed
+    const containerHeight = 400;
 
     const width = containerWidth - margin.left - margin.right;
     const height = containerHeight - margin.top - margin.bottom;
@@ -200,11 +164,9 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
     const chartArea = svg.append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    // Scales
     let xScale, xAxis;
     
     if (viewMode === 'yearly') {
-      // Use linear scale for years to show continuous range
       const years = data.map(d => +d.timePeriod);
       const minYear = Math.min(...years);
       const maxYear = Math.max(...years);
@@ -226,7 +188,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
           return (d % 2 === 0) ? d : '';
         });
     } else {
-      // Use band scale for other modes
       xScale = d3.scaleBand()
         .domain(data.map(d => d.timePeriod))
         .range([0, width])
@@ -243,7 +204,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       .domain([0, maxValue * 1.1])
       .range([height, 0]);
 
-    // Use the same color scale as the main scatterplot (d3.schemeCategory10)
     // Get all cluster IDs from the entire dataset to maintain consistent colors
     const allClusterIds = [...new Set(clusterData.points.map(p => p.kmeans_cluster))];
     const mainColorScale = d3.scaleOrdinal()
@@ -259,13 +219,11 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       });
     }
 
-    // Color scale that maps cluster names to the same colors as the main chart
     const colorScale = (clusterName) => {
       const clusterId = clusterNameToId[clusterName];
       return clusterId !== undefined ? mainColorScale(clusterId) : '#999999';
     };
 
-    // Create line generator
     const line = d3.line()
       .x(d => {
         if (viewMode === 'yearly') {
@@ -277,12 +235,10 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       .y(d => yScale(d.value))
       .curve(d3.curveMonotoneX);
 
-    // Add axes
     const xAxisGroup = chartArea.append("g")
         .attr("transform", `translate(0, ${height})`)
         .call(xAxis);
 
-    // Rotate x-axis labels if needed (only for non-yearly views or when there are many years)
     if ((viewMode === 'yearly' && data.length > 20) || (viewMode !== 'yearly' && data.length > 10)) {
       xAxisGroup.selectAll("text")
         .style("text-anchor", "end")
@@ -294,7 +250,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
     chartArea.append("g")
         .call(d3.axisLeft(yScale).ticks(5).tickFormat(d3.format("d")));
 
-    // Add axis labels
     chartArea.append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 0 - margin.left)
@@ -318,7 +273,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       .style("font-weight", "bold")
       .text(timeLabel);
 
-    // Create tooltip
     let tooltip = d3.select("body").select(".temporal-tooltip");
     if (tooltip.empty()) {
       tooltip = d3.select("body")
@@ -335,9 +289,7 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
         .style("z-index", "1000");
     }
 
-    // Draw lines and points for each cluster
     clusters.forEach(cluster => {
-      // CHANGED: Include ALL data points, even those with 0 values
       const clusterData = data.map(d => ({
         timePeriod: d.timePeriod,
         value: d[cluster]
@@ -345,10 +297,8 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
 
       if (clusterData.length === 0) return;
 
-      // Create sanitized class name for this cluster
       const sanitizedClassName = sanitizeClassName(cluster);
 
-      // Draw line
       chartArea.append("path")
         .datum(clusterData)
         .attr("fill", "none")
@@ -359,7 +309,7 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
 
       // Draw points - but only show points where value > 0 to avoid clutter
       chartArea.selectAll(`.point-${sanitizedClassName}`)
-        .data(clusterData.filter(d => d.value > 0)) // Only show points with data
+        .data(clusterData.filter(d => d.value > 0))
         .enter()
         .append("circle")
         .attr("class", `point-${sanitizedClassName}`)
@@ -400,7 +350,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
         });
     });
 
-    // Add legend
     const legend = svg.append("g")
       .attr("transform", `translate(${width + margin.left + 20}, ${margin.top})`);
 
@@ -438,7 +387,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
         .text(cluster.length > 20 ? cluster.substring(0, 20) + "..." : cluster);
     });
 
-    // Add title
     svg.append("text")
       .attr("x", containerWidth / 2)
       .attr("y", 30)
@@ -447,7 +395,6 @@ const TemporalTrendsVisualization = ({ clusterData, selectedClusters }) => {
       .style("font-weight", "bold")
       .text(`${showCumulative ? 'Cumulative ' : ''}Accident Trends by ${timeLabel}`);
 
-    // Add subtitle with data info
     svg.append("text")
       .attr("x", containerWidth / 2)
       .attr("y", 50)

@@ -71,7 +71,6 @@ const LengthHistogram = ({ data }) => {
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
-    // For x scale, use linear scale from min bin_start to max bin_end
     const x = d3
       .scaleLinear()
       .domain([
@@ -87,7 +86,6 @@ const LengthHistogram = ({ data }) => {
       .nice()
       .range([margin.top + chartHeight, margin.top]);
 
-    // Tooltip setup
     const tooltip = d3
       .select("body")
       .selectAll(".tooltip")
@@ -111,8 +109,8 @@ const LengthHistogram = ({ data }) => {
       .data(transformedData)
       .join("rect")
       .attr("x", (d) => x(d.binStart))
-      .attr("width", (d) => x(d.binEnd) - x(d.binStart) - 1) // -1 for small gap between bars
-      .attr("y", y(0)) // start at bottom
+      .attr("width", (d) => x(d.binEnd) - x(d.binStart) - 1)
+      .attr("y", y(0))
       .attr("height", 0)
       .attr("fill", "#db291d")
       .style("cursor", "pointer")

@@ -49,7 +49,7 @@ def add_aircraft_manufacturer(main_csv):
     def find_manufacturer(ac_type, operator):
         for m in manufacturers:
             if m in ac_type or ac_type in m or m in operator or operator in m:
-                return m.title()  # Capitalized nicely
+                return m.title()
         return 'Unknown'
 
     # Apply the matching logic to each row
@@ -113,7 +113,6 @@ def add_aircraft_specs(accidents_df):
 def main():
     main_csv = pd.read_csv("./planecrash_data/planecrash_dataset.csv")
 
-    # add_operator_country(main_csv)
     add_aircraft_specs(main_csv)
     
     return

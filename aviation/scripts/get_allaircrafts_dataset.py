@@ -9,7 +9,6 @@ def get_opensky_aircraft_data(icao24):
         print(f"Failed for {icao24}: {response.status_code}")
         return None
 
-# Example usage with dummy ICAO24 (you'd need to map registration like "HZ-MIS" to ICAO24)
-icao24 = "48429e"  # You need to look up the ICAO24 hex for the aircraft registration
+icao24 = "48429e"
 aircraft_info = get_opensky_aircraft_data(icao24)
 print(aircraft_info)

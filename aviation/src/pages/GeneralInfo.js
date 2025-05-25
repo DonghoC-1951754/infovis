@@ -54,6 +54,11 @@ const TimelineChart = ({ data }) => {
       .nice()
       .range([height, 0]);
 
+    // Create color scale from bright red (low values) to deep red (high values)
+    const colorScale = d3.scaleLinear()
+      .domain(d3.extent(yearData, d => d.count))
+      .range(["#db291d", "#941b13"]);
+
     const g = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -72,6 +77,24 @@ const TimelineChart = ({ data }) => {
       .style("pointer-events", "none")
       .style("z-index", "1000");
 
+    // Create gradient definition for the line
+    const defs = svg.append("defs");
+    const gradient = defs.append("linearGradient")
+      .attr("id", "line-gradient")
+      .attr("gradientUnits", "userSpaceOnUse")
+      .attr("x1", 0).attr("y1", height)
+      .attr("x2", 0).attr("y2", 0);
+
+    // Add gradient stops based on y-scale
+    const gradientStops = 10;
+    for (let i = 0; i <= gradientStops; i++) {
+      const offset = i / gradientStops;
+      const value = y.invert(height * (1 - offset));
+      gradient.append("stop")
+        .attr("offset", `${offset * 100}%`)
+        .attr("stop-color", colorScale(value));
+    }
+
     const line = d3.line()
       .x(d => x(d.year))
       .y(d => y(d.count))
@@ -80,7 +103,7 @@ const TimelineChart = ({ data }) => {
     g.append("path")
       .datum(yearData)
       .attr("fill", "none")
-      .attr("stroke", "#3b82f6")
+      .attr("stroke", "url(#line-gradient)")
       .attr("stroke-width", 3)
       .attr("d", line);
 
@@ -91,10 +114,11 @@ const TimelineChart = ({ data }) => {
       .attr("cx", d => x(d.year))
       .attr("cy", d => y(d.count))
       .attr("r", 4)
-      .attr("fill", "#3b82f6")
+      .attr("fill", d => colorScale(d.count))
       .style("cursor", "pointer")
       .on("mouseover", function(event, d) {
-        d3.select(this).attr("fill", "#1d4ed8").attr("r", 6);
+        const hoverColor = d3.color(colorScale(d.count)).darker(0.5);
+        d3.select(this).attr("fill", hoverColor).attr("r", 6);
         tooltip.style("visibility", "visible")
           .html(`<strong>Year:</strong> ${d.year}<br/><strong>Accidents:</strong> ${d.count}`);
       })
@@ -103,21 +127,19 @@ const TimelineChart = ({ data }) => {
           .style("top", (event.clientY - 10) + "px")
           .style("left", (event.clientX + 10) + "px");
       })
-      .on("mouseout", function() {
-        d3.select(this).attr("fill", "#3b82f6").attr("r", 4);
+      .on("mouseout", function(event, d) {
+        d3.select(this).attr("fill", colorScale(d.count)).attr("r", 4);
         tooltip.style("visibility", "hidden");
       });
 
     // Create custom x-axis with ticks every year but labels every 3 years
     const [minYear, maxYear] = d3.extent(yearData, d => d.year);
     const xAxis = d3.axisBottom(x)
-      .tickValues(d3.range(minYear, maxYear + 1, 1)) // Tick every year
+      .tickValues(d3.range(minYear, maxYear + 1, 1)) 
       .tickFormat((d, i) => {
-        // Show label only every 3 years starting from first year
         return (d - minYear) % 3 === 0 ? d3.format("d")(d) : "";
       })
-      .tickSize(6); // Default tick size
-
+      .tickSize(6);
     const xAxisGroup = g.append("g")
       .attr("transform", `translate(0,${height})`)
       .call(xAxis);
@@ -128,10 +150,10 @@ const TimelineChart = ({ data }) => {
         const tick = d3.select(this);
         const shouldHaveLabel = (d - minYear) % 3 === 0;
         if (shouldHaveLabel) {
-          tick.select("line").attr("y2", 10); // Longer tick for labeled years
-          tick.select("text").attr("dy", "1.5em"); // Move label down for longer ticks
+          tick.select("line").attr("y2", 10);
+          tick.select("text").attr("dy", "1.5em");
         } else {
-          tick.select("line").attr("y2", 4);  // Shorter tick for unlabeled years
+          tick.select("line").attr("y2", 4);
         }
       });
 
@@ -260,10 +282,10 @@ const TimeOfDayChart = ({ data }) => {
       .attr("width", x.bandwidth())
       .attr("y", d => y(d.count))
       .attr("height", d => height - y(d.count))
-      .attr("fill", "#6366f1")
+      .attr("fill", "#db291d")
       .style("cursor", "pointer")
       .on("mouseover", function(event, d) {
-        d3.select(this).attr("fill", "#4338ca");
+        d3.select(this).attr("fill", "#941b13");
         const timeRange = `${d.hour.toString().padStart(2, '0')}:00 - ${(d.hour + 1).toString().padStart(2, '0')}:00`;
         tooltip.style("visibility", "visible")
           .html(`<strong>Time:</strong> ${timeRange}<br/><strong>Accidents:</strong> ${d.count}`);
@@ -274,7 +296,7 @@ const TimeOfDayChart = ({ data }) => {
           .style("left", (event.clientX + 10) + "px");
       })
       .on("mouseout", function() {
-        d3.select(this).attr("fill", "#6366f1");
+        d3.select(this).attr("fill", "#db291d");
         tooltip.style("visibility", "hidden");
       });
 
@@ -338,7 +360,6 @@ const AccidentSeverityChart = ({ data }) => {
   useEffect(() => {
     if (!data || data.length === 0 || dimensions.width === 0 || dimensions.height === 0) return;
 
-    // Process severity data
     const severityBuckets = {
       '0': 0,        // No fatalities
       '1-10': 0,     // 1-10 fatalities
@@ -522,13 +543,11 @@ const SurvivalRateGauge = ({ data }) => {
     const g = svg.append("g")
       .attr("transform", `translate(${width / 2}, ${height / 2 + 10})`);
 
-    // Background arc
     g.append("path")
       .datum({ endAngle: Math.PI / 2 })
       .style("fill", "#e5e7eb")
       .attr("d", arc);
 
-    // Survival rate arc
     const survivalAngle = (survivalStats.survivalRate / 100) * Math.PI - Math.PI / 2;
     
     g.append("path")
@@ -536,7 +555,6 @@ const SurvivalRateGauge = ({ data }) => {
       .style("fill", survivalStats.survivalRate > 50 ? "#10b981" : "#ef4444")
       .attr("d", arc);
 
-    // Center text
     g.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "-0.5em")
@@ -677,7 +695,6 @@ const GeneralInfo = () => {
     fetchData();
   }, []);
 
-  // Process data for statistics
   const processedStats = React.useMemo(() => {
     if (accidentData.length === 0) return null;
 

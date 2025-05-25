@@ -5,7 +5,6 @@ let colorScaleCache = {};
 export const getManufacturerColorScale = (allManufacturers) => {
   const uniqueManufacturers = Array.from(new Set(allManufacturers)).sort();
 
-  // Check if we already have this set cached
   const cacheKey = uniqueManufacturers.join(",");
   if (colorScaleCache[cacheKey]) return colorScaleCache[cacheKey];
 

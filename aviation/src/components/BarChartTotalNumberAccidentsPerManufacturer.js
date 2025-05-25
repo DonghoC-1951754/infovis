@@ -14,7 +14,6 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
   const chartRef = useRef(null);
   const tooltipRef = useRef(null);
 
-  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -63,23 +62,19 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
         "Antonov",
         "Lockheed Corporation",
       ].forEach((manufacturer) => {
-        // Random number of crashes between 0 and 10
         yearData[manufacturer] = Math.floor(Math.random() * 11);
       });
       mockData.push(yearData);
     }
 
-    // Set max year from mock data
     setMaxYear(2025);
     setEndYear(2025);
     setData(mockData);
   };
 
-  // Process data when inputs change
   useEffect(() => {
     if (data.length === 0) return;
 
-    // Filter data by year range
     const filteredData = data.filter(
       (item) => item.year >= startYear && item.year <= endYear
     );
@@ -89,7 +84,6 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
 
     filteredData.forEach((yearData) => {
       Object.entries(yearData).forEach(([key, value]) => {
-        // Skip the year field and only count numerical values
         if (key !== "year" && !isNaN(value)) {
           manufacturerTotals[key] = (manufacturerTotals[key] || 0) + value;
         }
@@ -101,13 +95,11 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
       .map(([manufacturer, crashes]) => ({ manufacturer, crashes }))
       .sort((a, b) => b.crashes - a.crashes);
 
-    // Get top N manufacturers
     result = result.slice(0, topManufacturersCount);
 
     setAggregatedData(result);
   }, [data, startYear, endYear, topManufacturersCount]);
 
-  // Create tooltip ref on component mount
   useEffect(() => {
     // Create tooltip div inside the component rather than appending to body
     tooltipRef.current = d3
@@ -139,15 +131,12 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
     // Clear previous chart
     d3.select(chartRef.current).selectAll("svg").remove();
 
-    // Get container dimensions to make chart responsive
     const containerWidth = chartRef.current.clientWidth || 400;
 
-    // Set dimensions - make them responsive to container
     const margin = { top: 20, right: 20, bottom: 70, left: 40 };
     const width = containerWidth - margin.left - margin.right;
     const height = 250 - margin.top - margin.bottom;
 
-    // Create SVG with responsive dimensions
     const svg = d3
       .select(chartRef.current)
       .append("svg")
@@ -183,7 +172,7 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
     const maxCrashes = d3.max(aggregatedData, (d) => d.crashes);
     const y = d3
       .scaleLinear()
-      .domain([0, maxCrashes || 1]) // Fallback if maxCrashes is undefined
+      .domain([0, maxCrashes || 1])
       .range([height, 0]);
 
     svg
@@ -191,8 +180,8 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
       .call(
         d3
           .axisLeft(y)
-          .ticks(Math.min(maxCrashes, 10)) // Set reasonable max tick count
-          .tickFormat(d3.format(".0f")) // Format as integer
+          .ticks(Math.min(maxCrashes, 10))
+          .tickFormat(d3.format(".0f"))
       )
       .selectAll("text")
       .style("font-size", "10px");
@@ -205,20 +194,17 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
       .append("rect")
       .attr("x", (d) => x(d.manufacturer))
       .attr("width", x.bandwidth())
-      .attr("y", height) // Start from bottom for animation
-      .attr("height", 0) // Start with height 0 for animation
+      .attr("y", height) 
+      .attr("height", 0)
       .attr("fill", "#db291d")
       .attr("opacity", 0.8)
       .on("mouseover", function (event, d) {
         // Highlight bar
         d3.select(this).attr("opacity", 1).attr("fill", "#941b13");
-
-        // Calculate position relative to chart container
         const chartRect = chartRef.current.getBoundingClientRect();
         const eventX = event.clientX - chartRect.left;
         const eventY = event.clientY - chartRect.top;
 
-        // Show tooltip
         tooltipRef.current
           .style("opacity", 0.9)
           .html(`<strong>${d.manufacturer}</strong><br>${d.crashes} crashes`)
@@ -226,19 +212,16 @@ export default function BarChartTotalNumberAccidentsPerManufacturer() {
           .style("top", `${eventY - 28}px`);
       })
       .on("mouseout", function () {
-        // Restore bar
         d3.select(this).attr("opacity", 0.8).attr("fill", "#db291d");
-
-        // Hide tooltip
         tooltipRef.current.style("opacity", 0);
       })
       // Animate bars growing from bottom
       .transition()
       .duration(800)
-      .delay((d, i) => i * 50) // Stagger the animations
+      .delay((d, i) => i * 50)
       .attr("y", (d) => y(d.crashes))
       .attr("height", (d) => height - y(d.crashes))
-      .ease(d3.easeElastic.amplitude(0.5).period(0.7)); // Bouncy animation
+      .ease(d3.easeElastic.amplitude(0.5).period(0.7));
 
     // Simple title with fade-in animation
     svg

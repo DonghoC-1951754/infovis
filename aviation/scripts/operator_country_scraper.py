@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 
-# Target URL
 url = "https://www.avcodes.co.uk/regprefixcur.asp"
 headers = {
     "User-Agent": "Mozilla/5.0"
@@ -25,7 +24,6 @@ for row in rows:
         first_four = [td.get_text(strip=True) for td in tds[:4]]
         data.append(first_four)
 
-# Optional: set column headers
 headers = ["Current Prefix", "Old Prefix", "Country Name", "Period"]
 
 # Save to CSV

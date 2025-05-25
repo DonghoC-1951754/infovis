@@ -33,7 +33,6 @@ const Home = () => {
         if (data.kmeans && data.kmeans.clusters) {
           const clusters = data.kmeans.clusters.sort((a, b) => a.id - b.id);
           setClusterList(clusters);
-          // Initially select all clusters
           setSelectedClusters(clusters.map(cluster => cluster.id));
         }
         
@@ -63,7 +62,6 @@ const Home = () => {
       return;
     }
     
-    // Clear any existing SVG
     d3.select(scatterplotRef.current).selectAll("*").remove();
     
     // Filter points based on selected clusters for scatterplot only
@@ -71,19 +69,16 @@ const Home = () => {
       selectedClusters.includes(point.kmeans_cluster)
     );
     
-    // Get the container dimensions dynamically
     const container = scatterplotRef.current.parentElement;
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     
-    // Calculate responsive dimensions
-    const width = Math.max(containerWidth - 20, 600); // Min width of 600px
-    const height = Math.max(containerHeight - 20, 400); // Min height of 400px
+    const width = Math.max(containerWidth - 20, 600); 
+    const height = Math.max(containerHeight - 20, 400); 
     const margin = { top: 50, right: 180, bottom: 80, left: 50 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     
-    // Create SVG with border
     const svg = d3.select(scatterplotRef.current)
       .append("svg")
       .attr("width", width)
@@ -92,7 +87,6 @@ const Home = () => {
       .style("border-radius", "8px")
       .style("background-color", "#ffffff");
     
-    // Add title to SVG
     svg.append("text")
       .attr("x", width / 2)
       .attr("y", margin.top / 2)
@@ -101,11 +95,9 @@ const Home = () => {
       .style("font-weight", "bold")
       .text("Clustering by accidents for aircraft crash summaries");
     
-    // Main chart area group with margins
     const chartArea = svg.append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
     
-    // Set up scales - use full data extent for consistent positioning across selections
     const allPoints = clusterData.points;
     const xExtent = d3.extent(allPoints, d => d.x);
     const yExtent = d3.extent(allPoints, d => d.y);
@@ -118,27 +110,22 @@ const Home = () => {
       .domain([yExtent[0] - 0.1, yExtent[1] + 0.1])
       .range([innerHeight, 0]);
     
-    // Create color scale for clusters
     const clusterIds = [...new Set(allPoints.map(d => d.kmeans_cluster))];
     const color = d3.scaleOrdinal()
       .domain(clusterIds)
       .range(d3.schemeCategory10);
     
-    // Add clip path to ensure points don't render outside the chart area during zoom
     chartArea.append("defs").append("clipPath")
       .attr("id", "clip")
       .append("rect")
       .attr("width", innerWidth)
       .attr("height", innerHeight);
     
-    // Create a group for the plot area that will be clipped
     const plotArea = chartArea.append("g")
       .attr("clip-path", "url(#clip)");
-    
-    // Create a group for the points that will be zoomed
+     
     const pointsGroup = plotArea.append("g");
-    
-    // Create tooltip
+     
     let tooltip = d3.select("body").select(".scatterplot-tooltip");
     if (tooltip.empty()) {
       tooltip = d3.select("body")
@@ -157,11 +144,9 @@ const Home = () => {
         .style("z-index", "1000");
     }
     
-    // Calculate responsive dot size based on container size
     const dotSize = Math.max(3, Math.min(8, width / 150));
     const hoverSize = dotSize * 1.5;
     
-    // Add dots - now using filtered points
     pointsGroup.selectAll(".dot")
       .data(filteredPoints)
       .join("circle")
@@ -218,7 +203,6 @@ const Home = () => {
         // Set the selected point
         setSelectedPoint(d);
         
-        // Visual feedback for clicked point
         pointsGroup.selectAll(".dot").style("stroke", "none").style("stroke-width", 0);
         d3.select(this).style("stroke", "#000").style("stroke-width", 2);
       });
@@ -286,14 +270,11 @@ const Home = () => {
         pointsGroup.attr("transform", transform);
       });
     
-    // Add zoom behavior to the SVG
     svg.call(zoom);
     
-    // Add zoom controls
     const zoomControls = svg.append("g")
       .attr("transform", `translate(${margin.left + 10}, ${height - margin.bottom + 25})`);
     
-    // Zoom control panel background
     zoomControls.append("rect")
       .attr("x", -5)
       .attr("y", -5)
@@ -382,7 +363,6 @@ const Home = () => {
         svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
       });
       
-    // Add "Zoom Controls" label
     zoomControls.append("text")
       .attr("x", -5)
       .attr("y", -10)
@@ -397,7 +377,6 @@ const Home = () => {
       return;
     }
     
-    // Clear any existing SVG
     d3.select(distributionChartRef.current).selectAll("*").remove();
     
     const distribution = clusterData.kmeans.distribution;
@@ -411,23 +390,20 @@ const Home = () => {
       size: cluster.size || 0,
       isSelected: selectedClusters.includes(cluster.id),
       terms: cluster.terms || []
-    })).sort((a, b) => a.id - b.id); // Sort by cluster ID
+    })).sort((a, b) => a.id - b.id);
     
-    // Calculate totals for subtitle
     const selectedData = enhancedData.filter(d => d.isSelected);
     const selectedTotalCount = selectedData.reduce((sum, d) => sum + d.count, 0);
     const allTotalCount = enhancedData.reduce((sum, d) => sum + d.count, 0);
     const selectedClustersCount = selectedData.length;
     const totalClustersCount = enhancedData.length;
     
-    // Get responsive dimensions
     const container = distributionChartRef.current.parentElement;
     const containerWidth = container.clientWidth;
     const width = Math.max(containerWidth - 40, 800);
     const height = 500;
     const margin = { top: 60, right: 30, bottom: 140, left: 80 };
     
-    // Create main SVG
     const svg = d3.select(distributionChartRef.current)
       .append("svg")
       .attr("width", width)
@@ -438,7 +414,6 @@ const Home = () => {
     
     // Check if no data exists
     if (enhancedData.length === 0) {
-      // Show message for no data
       svg.append("text")
         .attr("x", width / 2)
         .attr("y", height / 2 - 20)
@@ -460,7 +435,6 @@ const Home = () => {
       .domain(clusterIds)
       .range(d3.schemeCategory10);
     
-    // Set up scales - use count values for Y axis
     const x = d3.scaleBand()
       .domain(enhancedData.map(d => d.id))
       .range([0, width - margin.left - margin.right])
@@ -470,7 +444,6 @@ const Home = () => {
       .domain([0, d3.max(enhancedData, d => d.count) * 1.1 || 1])
       .range([height - margin.top - margin.bottom, 0]);
     
-    // Add X axis with enhanced styling
     const xAxis = chartArea.append("g")
       .attr("transform", `translate(0, ${height - margin.top - margin.bottom})`);
       
@@ -484,7 +457,6 @@ const Home = () => {
       .each(function(d) {
         const tick = d3.select(this);
         
-        // Add tick line
         tick.append("line")
           .attr("y1", 0)
           .attr("y2", 6)
@@ -500,7 +472,7 @@ const Home = () => {
           .style("font-weight", d.isSelected ? "bold" : "normal")
           .text(`#${d.id}`);
         
-        // Add category name (wrapped)
+        // Add category name 
         const words = d.interpretation.split(' ');
         const maxWidth = x.bandwidth();
         let line = [];
@@ -533,7 +505,6 @@ const Home = () => {
         }
       });
     
-    // Add Y axis with enhanced styling - show count values
     const yAxis = chartArea.append("g")
       .call(d3.axisLeft(y).ticks(8).tickFormat(d3.format("d")))
       .style("color", "#333");
@@ -546,7 +517,6 @@ const Home = () => {
       .style("fill", "#333")
       .style("font-size", "12px");
       
-    // Add Y axis label
     yAxis.append("text")
       .attr("fill", "#333")
       .attr("transform", "rotate(-90)")
@@ -557,7 +527,6 @@ const Home = () => {
       .style("font-weight", "bold")
       .text("Number of Incidents");
     
-    // Create tooltip without background
     let tooltip = d3.select("body").select(".distribution-tooltip");
     if (tooltip.empty()) {
       tooltip = d3.select("body")
@@ -576,7 +545,7 @@ const Home = () => {
         .style("z-index", "1000");
     }
     
-    // Add bars with animations and interactions - FOR ALL CLUSTERS
+    // Add bars with animations and interactions
     const bars = chartArea.selectAll(".bar")
       .data(enhancedData)
       .enter()
@@ -584,7 +553,6 @@ const Home = () => {
       .attr("class", "bar")
       .style("cursor", "pointer");
     
-    // Add background bars for animation effect
     bars.append("rect")
       .attr("class", "bar-bg")
       .attr("x", d => x(d.id))
@@ -593,7 +561,7 @@ const Home = () => {
       .attr("height", height - margin.top - margin.bottom)
       .attr("fill", "rgba(255,255,255,0.05)");
     
-    // Add main bars - with conditional styling for selected/unselected
+    // Add main bars
     const mainBars = bars.append("rect")
       .attr("class", "bar-main")
       .attr("x", d => x(d.id))
@@ -604,7 +572,6 @@ const Home = () => {
       .style("opacity", d => d.isSelected ? 1 : 0.5) // More transparent for unselected
       .style("filter", d => d.isSelected ? "url(#glow)" : "none"); // No glow for unselected
     
-    // Animate bars
     mainBars.transition()
       .duration(1000)
       .delay((d, i) => i * 100)
@@ -631,7 +598,6 @@ const Home = () => {
         return '';
       });
     
-    // Animate labels
     labels.transition()
       .duration(1000)
       .delay((d, i) => i * 100 + 500)
@@ -643,18 +609,16 @@ const Home = () => {
     // Enable interactions after animation completes
     setTimeout(() => {
       animationComplete = true;
-    }, 1000 + (enhancedData.length * 100) + 200); // Animation duration + delays + buffer
+    }, 1000 + (enhancedData.length * 100) + 200); 
     
     bars.on("mouseover", function(event, d) {
       if (!animationComplete) return; // Prevent hover during animation
       
-      // Highlight bar with slight opacity change
       d3.select(this).select(".bar-main")
         .transition()
         .duration(200)
         .style("opacity", d.isSelected ? 0.8 : 0.7);
       
-      // Show tooltip
       const topTerms = d.terms.slice(0, 5).map(term => 
         typeof term === 'object' ? term.term : term
       ).join(', ');
@@ -692,22 +656,18 @@ const Home = () => {
     .on("mouseout", function(event, d) {
       if (!animationComplete) return; // Prevent hover during animation
       
-      // Reset bar
       d3.select(this).select(".bar-main")
         .transition()
         .duration(200)
         .style("opacity", d.isSelected ? 1 : 0.5);
       
-      // Hide tooltip
       tooltip.style("opacity", 0);
     })
     .on("click", function(event, d) {
       if (!animationComplete) return; // Prevent clicks during animation
       
-      // Toggle cluster selection
       handleClusterToggle(d.id);
       
-      // Add subtle click feedback
       d3.select(this).select(".bar-main")
         .transition()
         .duration(150)
@@ -717,12 +677,10 @@ const Home = () => {
         .style("opacity", d.isSelected ? 1 : 0.5);
     });
     
-    // Add control buttons
     const buttonGroup = svg.append("g")
       .attr("class", "control-buttons")
       .attr("transform", `translate(${width - 200}, 15)`);
     
-    // Select All button
     const selectAllButton = buttonGroup.append("g")
       .attr("class", "select-all-btn")
       .style("cursor", "pointer")
@@ -734,15 +692,15 @@ const Home = () => {
       .attr("width", 85)
       .attr("height", 25)
       .attr("rx", 4)
-      .attr("fill", "#dbeafe")  // Tailwind bg-blue-100
-      .attr("stroke", "#bfdbfe") // Slight blue border
+      .attr("fill", "#dbeafe") 
+      .attr("stroke", "#bfdbfe") 
       .attr("stroke-width", 1);
 
     selectAllButton.append("text")
       .attr("x", 42.5)
       .attr("y", 16)
       .attr("text-anchor", "middle")
-      .style("fill", "#1e40af")  // Tailwind text-blue-800
+      .style("fill", "#1e40af")
       .style("font-size", "11px")
       .style("font-weight", "bold")
       .text("Select All");
@@ -752,13 +710,13 @@ const Home = () => {
         d3.select(this).select("rect")
           .transition()
           .duration(200)
-          .attr("fill", "#bfdbfe"); // Tailwind hover:bg-blue-200
+          .attr("fill", "#bfdbfe");
       })
       .on("mouseout", function() {
         d3.select(this).select("rect")
           .transition()
           .duration(200)
-          .attr("fill", "#dbeafe"); // Tailwind bg-blue-100
+          .attr("fill", "#dbeafe");
       })
       .on("click", function(event) {
         event.stopPropagation();
@@ -773,14 +731,13 @@ const Home = () => {
           });
         }
 
-        // Visual feedback on click
         d3.select(this).select("rect")
           .transition()
           .duration(150)
-          .attr("fill", "#93c5fd") // Optional deeper blue for click feedback
+          .attr("fill", "#93c5fd")
           .transition()
           .duration(150)
-          .attr("fill", "#bfdbfe"); // Back to hover blue
+          .attr("fill", "#bfdbfe");
       });
 
 
@@ -798,15 +755,15 @@ const Home = () => {
       .attr("width", 85)
       .attr("height", 25)
       .attr("rx", 4)
-      .attr("fill", "#f3f4f6")  // Tailwind bg-gray-100
-      .attr("stroke", "#e5e7eb") // Light border (gray-200)
+      .attr("fill", "#f3f4f6")
+      .attr("stroke", "#e5e7eb")
       .attr("stroke-width", 1);
 
     deselectAllButton.append("text")
       .attr("x", 42.5)
       .attr("y", 16)
       .attr("text-anchor", "middle")
-      .style("fill", "#1f2937")  // Tailwind text-gray-800
+      .style("fill", "#1f2937")
       .style("font-size", "11px")
       .style("font-weight", "bold")
       .text("Clear All");
@@ -816,13 +773,13 @@ const Home = () => {
         d3.select(this).select("rect")
           .transition()
           .duration(200)
-          .attr("fill", "#e5e7eb"); // Tailwind hover:bg-gray-200
+          .attr("fill", "#e5e7eb");
       })
       .on("mouseout", function() {
         d3.select(this).select("rect")
           .transition()
           .duration(200)
-          .attr("fill", "#f3f4f6"); // Tailwind bg-gray-100
+          .attr("fill", "#f3f4f6");
       })
       .on("click", function(event) {
         event.stopPropagation();
@@ -834,14 +791,13 @@ const Home = () => {
           });
         }
 
-        // Visual feedback
         d3.select(this).select("rect")
           .transition()
           .duration(150)
-          .attr("fill", "#d1d5db") // darker gray for click
+          .attr("fill", "#d1d5db")
           .transition()
           .duration(150)
-          .attr("fill", "#e5e7eb"); // back to hover gray
+          .attr("fill", "#e5e7eb");
       });
 
     
@@ -856,7 +812,6 @@ const Home = () => {
       .delay(700)
       .style("opacity", 1);
 
-    // Add title with animation
     const title = svg.append("text")
       .attr("x", width / 2)
       .attr("y", 30)
@@ -897,7 +852,6 @@ const Home = () => {
       .style("opacity", 1);
   };
   
-  // Handle cluster selection
   const handleClusterToggle = (clusterId) => {
     setSelectedClusters(prev => {
       if (prev.includes(clusterId)) {
@@ -955,12 +909,9 @@ const Home = () => {
                     <h2 className="text-xl font-semibold mb-4">Accident Cluster Visualization</h2>
                   </div>
                   
-                  {/* Responsive layout: Left panel for controls, Right side for graph */}
                   <div className="flex flex-1 px-6 pb-6 gap-6 min-h-0" ref={scatterplotContainerRef}>
-                    {/* Left Panel - Cluster Selection and Point Details - Fixed width */}
                     <div className="w-80 shrink-0 flex flex-col min-h-0">
                       <div className="space-y-4 flex flex-col h-full">
-                        {/* Cluster Selection Panel */}
                         <div className="shrink-0">
                           <div className="flex flex-col mb-4">
                             <h3 className="font-medium mb-2">Select Clusters to Display</h3>
@@ -1000,7 +951,6 @@ const Home = () => {
                           </div>
                         </div>
                         
-                        {/* Selected Point Details Panel - Flexible height */}
                         <div className="flex-1 min-h-0">
                           {selectedPoint ? (
                             <div className="border rounded-lg p-4 bg-gray-50 h-full overflow-y-auto">
@@ -1079,7 +1029,6 @@ const Home = () => {
                       </div>
                     </div>
                     
-                    {/* Right side - Responsive Scatterplot container */}
                     <div className="flex-1 min-h-0">
                       <div 
                         ref={scatterplotRef} 

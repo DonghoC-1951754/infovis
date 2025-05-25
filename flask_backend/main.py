@@ -1,8 +1,16 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from utils import get_operator_country_amount_by_range, get_list_of_manufacturers, get_number_of_accidents, get_number_of_accidents_per_year, get_cluster_data, get_aircraft_specs, get_accident_rate_per_engine_amount, get_accident_rate_per_weight_class, get_accident_rate_per_wingspan_bin, get_all_accident_data_without_summaries, get_passenger_crew_aboard_boxplot, get_accident_rate_per_length_bin
+from utils import get_operator_country_amount_by_range, get_list_of_manufacturers, get_number_of_accidents, get_accident_rate_per_wingspan_bin, get_all_accident_data_without_summaries, get_passenger_crew_aboard_boxplot, get_accident_rate_per_length_bin
+from utils import get_crash_locations_data_optimized, get_flight_routes_data_optimized, get_number_of_accidents_per_year, get_cluster_data, get_aircraft_specs, get_accident_rate_per_engine_amount, get_accident_rate_per_weight_class
+from utils import init_app
+
 app = Flask(__name__)
 CORS(app)
+
+# Initialize the geocoding cache when the app starts
+print("Loading geocoding cache...")
+init_app()
+print("Geocoding cache loaded successfully!")
 
 @app.route('/hello', methods=['GET'])
 def get_data():
@@ -66,6 +74,25 @@ def get_passenger_crew_aboard_boxplot_api():
 def get_accident_rate_per_length_bin_api():
     return get_accident_rate_per_length_bin()
 
+@app.route('/crash-locations', methods=['GET'])
+def get_crash_locations():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    if not start_date or not end_date:
+        return jsonify({"error": "Both start_date and end_date are required"}), 400
+    
+    result = get_crash_locations_data_optimized(start_date, end_date)
+    return result
+
+@app.route('/flight-routes', methods=['GET'])
+def get_flight_routes():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    if not start_date or not end_date:
+        return jsonify({"error": "Both start_date and end_date are required"}), 400
+    
+    result = get_flight_routes_data_optimized(start_date, end_date)
+    return result
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import SidePanel from "../components/Sidepanel";
 import * as d3 from "d3";
-import GraphCard from "../components/GraphCard.js";
 import LineGraphManufacturer from "../components/LineGraphManufacturer.js";
 import PieChartManufacturerAccidentContribution from "../components/PieChartManufacturerAccidentContribution.js";
 import BarChartTotalNumberAccidentsPerManufacturer from "../components/BarChartTotalNumberAccidentsPerManufacturer.js";
@@ -18,7 +17,7 @@ const Manufacturers = () => {
     fetch("http://127.0.0.1:5000/manufacturers")
       .then((response) => response.json())
       .then((data) => {
-        setManufacturers(data); // Assuming it returns an array of manufacturer names
+        setManufacturers(data); 
       })
       .catch((error) => {
         console.error("Error fetching manufacturers:", error);
@@ -26,7 +25,6 @@ const Manufacturers = () => {
   }, []);
 
   useEffect(() => {
-    // Fetch data from Flask endpoint
     fetch("http://localhost:5000/number_of_accidents_per_manufacturer")
       .then((response) => response.json())
       .then((data) => {
@@ -65,7 +63,6 @@ const Manufacturers = () => {
       .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    // Get keys based on selected manufacturers
     const keys = Array.from(selectedManufacturers);
 
     const color = d3.scaleOrdinal().domain(keys).range(d3.schemeSet2);
@@ -132,7 +129,7 @@ const Manufacturers = () => {
         return color(d.key);
       })
       .attr("d", area);
-  }, [allData, selectedManufacturers]); // Trigger when selectedManufacturers changes
+  }, [allData, selectedManufacturers]);
 
   return (
     <div className="h-screen flex">
@@ -140,7 +137,6 @@ const Manufacturers = () => {
       <div className="h-full w-full flex-col">
         <div className="h-1/2 w-full flex">
           <div className="bg-white shadow p-4 w-full h-full flex">
-            {/* Line Graph (4/5) */}
             <div className="w-4/5 h-full">
               <LineGraphManufacturer
                 id={1}
@@ -150,7 +146,6 @@ const Manufacturers = () => {
               />
             </div>
 
-            {/* Filter (1/5) */}
             <div className="w-1/5 h-full border-l pl-4 ml-2">
               <div className="sticky top-0 bg-white z-10 pb-2">
                 <h3 className="text-lg font-semibold mb-3">Manufacturers</h3>

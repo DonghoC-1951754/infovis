@@ -4,14 +4,14 @@ import EngineBarChart from "../components/EngineBarChart";
 import WeightBarChart from "../components/WeightBarChart";
 import WingspanHistogram from "../components/WingspanHistogram";
 import AboardBoxPlot from "../components/AboardBoxPlot";
-import LengthHistogram from "../components/LengthHistogram"; // ✅ New import
+import LengthHistogram from "../components/LengthHistogram";
 
 const PlaneStats = () => {
   const [engineData, setEngineData] = useState(null);
   const [weightData, setWeightData] = useState(null);
   const [wingspanData, setWingspanData] = useState(null);
   const [passengerCrewData, setPassengerCrewData] = useState(null);
-  const [lengthData, setLengthData] = useState(null); // ✅ New state
+  const [lengthData, setLengthData] = useState(null);
 
   const [showChart, setShowChart] = useState(false);
   const [chartType, setChartType] = useState(null);
@@ -165,7 +165,6 @@ const PlaneStats = () => {
               </div>
             </div>
 
-            {/* Chart display */}
             <div className="flex-grow h-full w-2/3 min-w-0">
               {showChart ? (
                 chartType === "engine" && engineData ? (
