@@ -5,6 +5,7 @@ import os
 import sys
 import numpy as np
 import math
+import re
 from flask import request, jsonify
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from aviation.scripts.summary_clustering import clustering_main
@@ -263,3 +264,55 @@ def get_all_accident_data_without_summaries():
     
     result_json = filtered_df.to_json(orient='records', force_ascii=False)
     return result_json
+
+
+def get_passenger_crew_aboard_boxplot():
+    df = pd.read_csv('../planecrash_data/accidents_with_specs.csv')
+    df['Similarity_Score'] = pd.to_numeric(df['Similarity_Score'], errors='coerce')
+    filtered_df = df[df['Similarity_Score'] >= 75]
+
+    def classify_weight(w):
+        if w > 255000:
+            return "Heavy"
+        elif w > 41000:
+            return "Large"
+        elif w > 12500:
+            return "Medium"
+        else:
+            return "Small"
+
+    filtered_df = filtered_df.dropna(subset=['MTOW_lb'])
+    filtered_df['Weight_Class'] = filtered_df['MTOW_lb'].apply(classify_weight)
+
+    filtered_df = filtered_df.dropna(subset=['MTOW_lb'])
+    filtered_df['Weight_Class'] = filtered_df['MTOW_lb'].apply(classify_weight)
+
+    def parse_aboard(aboard_str):
+        passengers, crew = np.nan, np.nan
+        if isinstance(aboard_str, str):
+            match_passengers = re.search(r"passengers:\s*(\d+|\?)", aboard_str)
+            match_crew = re.search(r"crew:\s*(\d+|\?)", aboard_str)
+            if match_passengers:
+                val = match_passengers.group(1)
+                passengers = int(val) if val.isdigit() else np.nan
+            if match_crew:
+                val = match_crew.group(1)
+                crew = int(val) if val.isdigit() else np.nan
+        return pd.Series({"Passengers": passengers, "Crew": crew})
+
+    parsed = filtered_df['Aboard'].apply(parse_aboard)
+    filtered_df = pd.concat([filtered_df, parsed], axis=1)
+
+    filtered_df = filtered_df.dropna(subset=['Passengers', 'Crew'], how='all')
+
+    output_data = {
+        "passengers": {},
+        "crew": {}
+    }
+
+    for wc in ['Small', 'Medium', 'Large', 'Heavy']:
+        df_wc = filtered_df[filtered_df['Weight_Class'] == wc]
+        output_data['passengers'][wc] = df_wc['Passengers'].dropna().astype(int).tolist()
+        output_data['crew'][wc] = df_wc['Crew'].dropna().astype(int).tolist()
+
+    return output_data

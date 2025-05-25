@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from utils import get_operator_country_amount_by_range, get_list_of_manufacturers, get_number_of_accidents, get_number_of_accidents_per_year, get_cluster_data, get_aircraft_specs, get_accident_rate_per_engine_amount, get_accident_rate_per_weight_class, get_accident_rate_per_wingspan_bin, get_all_accident_data_without_summaries
+from utils import get_operator_country_amount_by_range, get_list_of_manufacturers, get_number_of_accidents, get_number_of_accidents_per_year, get_cluster_data, get_aircraft_specs, get_accident_rate_per_engine_amount, get_accident_rate_per_weight_class, get_accident_rate_per_wingspan_bin, get_all_accident_data_without_summaries, get_passenger_crew_aboard_boxplot
 app = Flask(__name__)
 CORS(app)
 
@@ -57,6 +57,12 @@ def get_accident_rate_per_wingspan_bin_api():
 @app.route('/accident-data', methods=['GET'])
 def get_accident_data():
     return get_all_accident_data_without_summaries()
+
+@app.route('/get_passenger_crew_aboard', methods=['GET'])
+def get_passenger_crew_aboard_boxplot_api():
+    return get_passenger_crew_aboard_boxplot()
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
